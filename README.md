@@ -21,3 +21,6 @@ Each folder contains instructions for running the scripts. Please make sure to c
 3. Start the analysis. Our work has eight hypothesis. Therefore, we have divided the analysis into eight subfolders, so you do not need to run all the analysis. To run a particular analysis, please go to the subfolder ./src/analysis/ and select the folder. Again, you will find different scripts with the step#_ name, so it should be straightforward.
 
 4. Visualize. Our work has eight hypothesis and a few extra supplementary analysis. Therefore, we have divided the visualization into eleven subfolders. To visualize a particular result, please go to the subfolder ./src/visualization/ and select the folder. Again, you will find different scripts with the step#_ name, so it should be straightforward.
+
+# 4. Citation
+Citation here
