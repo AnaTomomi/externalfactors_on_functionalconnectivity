@@ -1,6 +1,6 @@
 #! user/bin/bash
 
-day=002
+day=$1
 path=/m/cs/scratch/networks-pm/effects_externalfactors_on_functionalconnectivity/data/sub-01/day-$day/behavioral;
 cd $path
 
