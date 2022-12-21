@@ -1,0 +1,5 @@
+*.pdf
+*.nii
+*.nii.gz
+*.acq
+data/
