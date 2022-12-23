@@ -11,8 +11,9 @@ import os
 import sys
 import datetime as dt
 import pandas as pd
+import numpy as np
 
-file = sys.argv[2]
+file = sys.argv[1]
 
 data = pd.read_csv(file, index_col="date")
 data["date"] = pd.to_datetime(data.index)
@@ -27,12 +28,11 @@ all_points.rename(columns={0:"date"}, inplace=True)
 
 df = all_points.set_index('date').join(data)
 df.drop(columns=["data"],inplace=True)
-df[df["Activity Score"]>0] = 0
-df = df["Activity Score"].to_frame()
+df[df["Sleep Score"]>0] = 0
+df = df["Sleep Score"].to_frame()
 df.fillna(1, inplace=True)
 
 percentage = df.sum()
-percentage = (percentage/133)*100
+percentage = (percentage/len(data))*100
 
-print(f'data loss in percentage for oura...............')
-print(percentage.values)
+print(f'data loss in percentage for oura {percentage.values[0]}')
