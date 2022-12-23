@@ -7,7 +7,7 @@
     ----------
     variable : str
         name of the variable to preprocess. It could be heart rate (hr), 
-        temperature (temperature), electrodermal activity (electrodermal)
+        temperature (temperature), electrodermal activity (electrodermal), and interbeatinterval
     day : str
         day number to be preprocessed. It should be given in three digit numbers (e.g. 003)
     path : str
@@ -33,15 +33,24 @@ df = []
 for file in files:
     data = pd.read_csv(f'{path}/{file}', header=None)
     start_time = data.iloc[0,0]
-    sample_rate = 1/data.iloc[1,0]
-    data = data.iloc[2:]
     
-    start_time = dt.datetime.fromtimestamp(start_time)
-    freq=f'{str(int(sample_rate))}S'    
-    data["time"] = pd.date_range(start=start_time, periods=len(data),freq=freq)
-    data.set_index("time", inplace=True)
-    data.rename(columns={0:'data'}, inplace=True)
+    if variable=='interbeatinterval':
+        data.rename(columns={0:'time', 1:'data'}, inplace=True)
+        data["time"] = data["time"] + start_time
+        data = data.iloc[1:]
+        data["time"] = pd.to_datetime(data['time'], unit='s')
+        data.set_index("time", inplace=True)   
+        
+    else:
+        sample_rate = 1/data.iloc[1,0]
+        data = data.iloc[2:]
     
+        start_time = dt.datetime.fromtimestamp(start_time)
+        freq=f'{str(sample_rate)}S'    
+        data["time"] = pd.date_range(start=start_time, periods=len(data),freq=freq)
+        data.set_index("time", inplace=True)
+        data.rename(columns={0:'data'}, inplace=True)
+        
     df.append(data)
     
 data = pd.concat(df)
