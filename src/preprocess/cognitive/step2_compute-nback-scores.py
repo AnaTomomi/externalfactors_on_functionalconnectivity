@@ -1,9 +1,35 @@
-import pandas as pd
+'''Preprocess nback scores. Reads all available logs from the nback task and  
+    computes the scores (median RT, number of correct, wrong, and missing answers) 
+    
+    The input should be done in the following order: 
+        - folder path where the files are
+        - savefile where the proprocessed data will be stored in csv format
+
+    Parameters
+    ----------
+    path : str
+        path where the raw data is stored 
+    savefile : str
+        path and name of the save file where the preprocessed data will be stored
+        
+
+    
+Salmela, V., Salo, E., Salmi, J., and Alho, K. (2018). Spatiotemporal Dynamics 
+of Attention Networks Revealed by Representational Similarity Analysis of EEG 
+and fMRI. Cereb. Cortex 28, 549–560. 10.1093/cercor/bhw389.
+'''
+
 import os
+import sys
+import numpy as np
+import pandas as pd
 
+from glob import glob
 
-datapath = "/u/68/trianaa1/unix/trianaa1/protocol/data/pilot_i/nback/s1/"
-os.chdir(datapath)
+path = sys.argv[1]
+savefile = sys.argv[2]
+os.chdir(path)
+
 
 def get_dual_data(stim2back):
     count=1
@@ -22,22 +48,22 @@ def get_dual_data(stim2back):
     return stats
 
 twoback = []
-for file in os.listdir(datapath):
-    if file.endswith("_2back_OnlyNovels_fMRI_rawdata.txt"):
+for file in os.listdir(path):
+    if file.endswith("nback_run-2_pres.txt"):
         twoback.append(file)
 twoback.sort()
 
 oneback = []
-for file in os.listdir(datapath):
-    if file.endswith("_OnlyNovels_fMRI_rawdata.txt"):
-        if not file.endswith("_2back_OnlyNovels_fMRI_rawdata.txt"):
-            oneback.append(file)
+for file in os.listdir(path):
+    if file.endswith("nback_run-1_pres.txt"):
+        oneback.append(file)
 oneback.sort()
 
 #Organize the data in dictionaries
 table_names = ["DD1"]
 days2back = dict()
 for file in twoback:
+    day = int(file[file.find('sub-01_day-')+len('sub-01_day-'):file.rfind('_task')])
     content = pd.read_csv(file, delimiter="\t", header=None, names=range(16))
     groups = content[1].isin(table_names).cumsum()
     tables = dict()
@@ -45,13 +71,18 @@ for file in twoback:
         df = g.iloc[1:]
         df = df.reset_index(drop=True)
         df.columns = df.iloc[0]
-        df = df.iloc[1:]
-        tables[g.iloc[0,1]] = df
-    days2back[int(file[-36:-34])] = tables
+        if k<4:
+            df = df.iloc[1:-3]
+        else:
+            df = df.iloc[1:]
+        tables[f'{g.iloc[0,1]}_{k}'] = df
+        tables.pop("nan_0",None)
+    days2back[day] = tables
     print(file)
 
 days1back = dict()
 for file in oneback:
+    day = int(file[file.find('sub-01_day-')+len('sub-01_day-'):file.rfind('_task')])
     content = pd.read_csv(file, delimiter="\t", header=None, names=range(16))
     groups = content[1].isin(table_names).cumsum()
     tables = dict()
@@ -59,22 +90,12 @@ for file in oneback:
         df = g.iloc[1:]
         df = df.reset_index(drop=True)
         df.columns = df.iloc[0]
-        df = df.iloc[1:]
-        tables[g.iloc[0,1]] = df
-    days1back[int(file[-30:-28])] = tables
+        if k<4:
+            df = df.iloc[1:-3]
+        else:
+            df = df.iloc[1:]
+        tables[f'{g.iloc[0,1]}_{k}'] = df
+        tables.pop("nan_0",None)
+    days1back[day] = tables
     print(file)
-    
-#Flip the info to store per stimuli
-stim2back = dict()
-for name in table_names:
-    stim2back[name] = dict()
-    for key in days2back:
-        stim2back[name][key] = days2back[key][name]
-        print(key, name)
 
-stim1back = dict()
-for name in table_names:
-    stim1back[name] = dict()
-    for key in days1back:
-        stim1back[name][key] = days1back[key][name]
-        print(key, name) 
