@@ -2,4 +2,5 @@
 *.nii
 *.nii.gz
 *.acq
+*.avi
 data/
