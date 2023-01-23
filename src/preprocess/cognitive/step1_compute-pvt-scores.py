@@ -1,7 +1,9 @@
 '''Preprocess PVT scores. Reads all available logs from the PVT and computes 
     the scores according to (Basner & Dinges, 2011). 
     
-    The input should be done in the following order:
+    The input should be done in the following order: 
+        - folder path where the files are
+        - savefile where the proprocessed data will be stored in csv format
 
     Parameters
     ----------
