@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --time=2-00:00:00
-#SBATCH --mem=64G
+#SBATCH --mem=30G
 #SBATCH --array=1
 #SBATCH --output=/m/cs/scratch/networks-pm/fmriprep_sub01-%j.out
 #SBATCH --cpus-per-task=4

@@ -21,8 +21,8 @@ Modified: 20.01.2023 Include new folder definitions according to AMI, include ex
 datapath = '/m/cs/archive/networks-pm/mri'
 savepath = '/m/cs/project/networks-pm/mri/fast_prepro_bids'
 dcm2niix_path = '/m/cs/scratch/networks-pm/software/dcm2niix/build/bin/dcm2niix'
-date = '20230123'
-subject = 'sub-03'
+date = '20230130'
+subject = 'sub-05'
 
 ###############################################################################
 

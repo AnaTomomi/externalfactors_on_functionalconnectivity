@@ -12,15 +12,14 @@ clear all
 close all
 clc
 
-drifterpath = './';
-sub = 'sub-01';
-ses = 'ses-01';
-savepath = '../../../data/pilot_iii/biopac';
+drifterpath = '/m/cs/archive/networks-pm/mri/20230127';
+sub = 'sub-04';
+savepath = sprintf('/m/cs/project/networks-pm/mri/fast_prepro_bids/%s', sub);
 task = {'pvt', 'resting', 'movie', 'nback'}; %Tasks in the order they were taken in the scanner
 
 %%%%%%%%% Do not modify from here on %%%%%%%%%%%%%%%%
-
-drifterfile = sprintf('%s/%s/%s/biopac/%s_%s_acq-highfreq_biopac.mat',drifterpath,sub,ses,sub,ses);
+day = sprintf('0%s',drifterpath(end-1:end));
+drifterfile = sprintf('%s/sub-01_day-%s_device-biopac.mat',drifterpath,day);
 
 if ~isfile(drifterfile)
     error('File does not exist. Please check the folder and file')
@@ -31,7 +30,7 @@ refdata=load(drifterfile);
 data = refdata.data; 
 
 %plot the data to see what it looks like
-temp=refdata.data(:,6);
+temp=refdata.data(:,7);
 dtemp=diff(temp);
 unique(diff(find(dtemp==5)))
 plot(temp)
@@ -40,16 +39,17 @@ plot(temp)
 interval_no = size(task,2);
 for i=1:interval_no
     ids = find(temp==5);
-    d = diff(find(temp==5));
+    d = diff(find(temp==5)); %find the indices where there is been an interruption
     if i<interval_no
-        inter_end = ids(find(d>1189,1,'first'));
+        inter_end = ids(find(d>10000,1,'first'));
     else
         inter_end = find(temp==5,1,'last');
     end
     inter_init = find(temp, 1, 'first');
     b = data(inter_init:inter_end,:);
     temp = temp(inter_end+1:end);
+    data = data(inter_end+1:end,:);
     
-    savefile = sprintf('%s/%s/%s/%s_%s_task-%s_biopac.mat',savepath, sub, ses, sub, ses, task{i});
+    savefile = sprintf('%s/func/%s_task-%s_device-biopac.mat',savepath, sub, task{i});
     save(savefile, 'b');
 end
