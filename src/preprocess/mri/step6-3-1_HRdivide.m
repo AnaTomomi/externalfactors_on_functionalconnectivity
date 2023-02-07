@@ -12,13 +12,13 @@ clear all
 close all
 clc
 
-drifterpath = '/m/cs/archive/networks-pm/mri/20230127';
-sub = 'sub-04';
+drifterpath = '/m/cs/archive/networks-pm/mri/20230206';
+sub = 'sub-07';
 savepath = sprintf('/m/cs/project/networks-pm/mri/fast_prepro_bids/%s', sub);
 task = {'pvt', 'resting', 'movie', 'nback'}; %Tasks in the order they were taken in the scanner
+day = '037';
 
 %%%%%%%%% Do not modify from here on %%%%%%%%%%%%%%%%
-day = sprintf('0%s',drifterpath(end-1:end));
 drifterfile = sprintf('%s/sub-01_day-%s_device-biopac.mat',drifterpath,day);
 
 if ~isfile(drifterfile)

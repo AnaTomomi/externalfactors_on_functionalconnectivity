@@ -1,6 +1,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % This script cuts the BIOPAC post-processed data according to the cuts   %
 % defined for the NII files.                                              % 
+% The cut files are in the 
 %                                                                         %
 %Author: ana.trianahoyos@aalto.fi                                         %
 %created: 08.09.2021                                                      %
@@ -10,30 +11,28 @@ clear all
 close all
 clc
 
-path = '../../../data/pilot_iii/biopac';
-sub = 'sub-01';
-ses = 'ses-01';
+path = '/m/cs/project/networks-pm/mri/fast_prepro_bids';
+savepath = '/m/cs/scratch/networks-pm/pm_preprocessed/';
+sub = 'sub-07';
 tasks = {'pvt', 'resting', 'movie', 'nback'}; %Tasks in the order they were taken in the scanner
-runs = {'1', '1', '1', '1'};
 
 for i=1:length(tasks)
     task = tasks{i};
-    run = runs{i};
-    load(sprintf('%s/%s/%s/%s_%s_task-%s_run-%s_biopac-downsampled.mat', path, sub, ses, sub, ses, task, run))
+    load(sprintf('%s/%s/func/%s_task-%s_device-biopac_downsampled.mat', path, sub, sub, task))
     disp(task)
     if strcmp(task,'pvt')
-        downsampled_cut = downsampled_tr(:,59:1070);
+        downsampled_cut = downsampled_tr(:,6:1121);
         disp(size(downsampled_cut))
     elseif strcmp(task,'resting')
-        downsampled_cut = downsampled_tr(:,50:755);
+        downsampled_cut = downsampled_tr(:,6:1107);
         disp(size(downsampled_cut))
     elseif strcmp(task,'movie')
-        downsampled_cut = downsampled_tr(:,33:1039);
+        downsampled_cut = downsampled_tr(:,6:1064);
         disp(size(downsampled_cut))
     elseif strcmp(task,'nback')
-        downsampled_cut = downsampled_tr;
+        downsampled_cut = downsampled_tr(:,6:619);
         disp(size(downsampled_cut))
     end
     
-    save(sprintf('%s/%s/%s/%s_%s_task-%s_run-%s_biopac-downsampledcut.mat', path, sub, ses, sub, ses, task, run), 'downsampled_cut');
+    save(sprintf('%s/%s/func/%s_task-%s_device-biopac_downsampledcut.mat', savepath, sub, sub, task), 'downsampled_cut');
 end
