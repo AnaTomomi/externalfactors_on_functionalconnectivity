@@ -19,6 +19,14 @@ atlas_name = 'seitzman-set1'
 vol_size = [91,109,91]
 
 ###############################################################################
+# Helper function
+def list2mat(a):
+    b = np.empty((len(a),), dtype=object)
+    for i in range(len(a)):
+        b[i] = a[i]  
+    return b
+
+###############################################################################
 
 #Make a list of files, subjects to preprocess
 files = sorted(glob.glob(nii_path + f'/**/*resting_*{strategy}.nii', recursive=True))
@@ -111,9 +119,7 @@ for file in files:
     print(f'Creating node time series for {file}')
     time_series = masker.fit_transform(file)
     all_ts.append(time_series)
-rs_ts = np.empty((len(all_ts),), dtype=object)
-for i in range(len(all_ts)):
-    rs_ts[i] = all_ts[i]  
+    rs_ts = list2mat(all_ts)
 savemat(roi_ts_file, {'rs_ts':rs_ts})
 
 #Compute the adjacency matrices and apply Fisher transform
@@ -139,20 +145,25 @@ x = mean_fd
 
 regressed = [np.zeros_like(matrix) for matrix in fisher]
 idx = np.triu_indices(len(fisher[0]),1) #gets two lists of indexes, idx[0] = rows and idx[1] = columns
-for i in idx[0]:
-    for j in idx[1]:
-        y = []
-        for matrix in fisher:
-            y.append(matrix[i][j]) #organize link i-j for the different days (subjects)
-        y = np.array(y)
-        #Regress the mean FD from the links
-        clf.fit(x,y)
-        betas = clf.coef_
-        regressed_links = y-np.dot(x,betas)-np.ones(len(y))*clf.intercept_
-        for sub, link in enumerate(regressed_links):
-            regressed[sub][i][j] = link #re-organize links into matrices
+idx = np.stack((idx[0], idx[1]), axis=1)
+for ind in range(len(idx)):
+    i = idx[ind,0]
+    j = idx[ind,1]
+    y = []
+    for matrix in fisher:
+        y.append(matrix[i][j]) #organize link i-j for the different days (subjects)
+    y = np.array(y)
+    #Regress the mean FD from the links
+    clf.fit(x,y)
+    betas = clf.coef_
+    regressed_links = y-np.dot(x,betas)-np.ones(len(y))*clf.intercept_
+    for sub, link in enumerate(regressed_links):
+        regressed[sub][i][j] = link #re-organize links into matrices
                 
 #Inverse Fisher
 inv_fisher = [np.tanh(matrix) for matrix in regressed]
+conn = list2mat(inv_fisher)
 
 #Save the connectivity matrices
+conn_file = f'{conn_path}/rs-adj_{strategy}_{atlas_name}.mat'
+savemat(conn_file, {'conn':conn})
