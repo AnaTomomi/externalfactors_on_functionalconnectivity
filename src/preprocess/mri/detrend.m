@@ -82,13 +82,10 @@ confounds(isnan(confounds))=0;
 
 % First step: mask the data
 disp('Masking the data... \n')
-if ~contains(strategy, 'ICA')
-    cfg.vol=double(nii.img);
-elseif contains(strategy, 'ICA')
-    nii = load_nii(smoothed);
-    cfg.vol=double(nii.img);
-end
+
+cfg.vol=double(nii.img);
 cfg.mask=double(mask.img);
+
 cfg.vol = bramila_maskdata(cfg);
 
 % Second step: detrend the fMRI data
@@ -132,7 +129,7 @@ for v=1:size(tempdata,2) % for each confound
     tempdata(:,v)=res;
 end	  
 confounds=tempdata;
-csvwrite(sprintf('%s/%s/%s_task-%s_detrended-confounds.csv',savepath, subject, subject, task),confounds)
+csvwrite(sprintf('%s/%s/%s_task-%s_detrended-confounds-%s.csv',savepath, subject, subject, task, strategy),confounds)
 
 fprintf('Detrend complete for %s, %s, %s \n', subject, task, strategy)
     
