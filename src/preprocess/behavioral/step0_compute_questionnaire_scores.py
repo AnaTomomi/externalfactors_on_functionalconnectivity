@@ -13,6 +13,11 @@ Created: 07.06.2023
 import pandas as pd
 from datetime import datetime
 
+################################# MODIFY ######################################
+path = "/m/cs/archive/networks-pm/behavioral/questionnaires/questionnaires.xlsx"
+savepath = "/m/cs/scratch/networks-pm/effects_externalfactors_on_functionalconnectivity/data/questionnaires"
+###############################################################################
+
 def compute_phq_gad(df):
     df.drop(columns=['id','question'],inplace=True)
     data = df.sum(skipna=False)
@@ -147,11 +152,7 @@ def compute_psqi(df):
 
     return result
 
-    
-# Read the files
-path = "/m/cs/archive/networks-pm/behavioral/questionnaires/questionnaires.xlsx"
-savepath = "/m/cs/scratch/networks-pm/effects_externalfactors_on_functionalconnectivity/data/questionnaires"
-
+################### Computation starts here ###################################    
 #Compute the scores
 df = pd.read_excel(path, sheet_name="Big Five Inventory", skiprows=[0,1,2,3,4,5])
 big_five = compute_big_five(df)
