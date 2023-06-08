@@ -1,10 +1,14 @@
-"""Re order the empatica files and name it using the pre-established convention
+"""Re order the empatica files and name it using the pre-established convention.
+    This script will unify the different measurements splitted in several files 
+    into one dataframe per day. The dataframe is stored as a csv file. 
     
     The input should be done in the following order:
 
     Parameters
     ----------
     path : str
+        path where the raw data is stored
+    savepath : str
         path where the raw data is stored
     """
 
@@ -36,3 +40,4 @@ for index, row in df.iterrows():
         for dataf in all_data[1:]:
             data = data.combine_first(dataf)
         data.to_csv(f'{savepath}/sub-01_{row["day"]}_device-embraceplus.csv')
+    print(f'{row["folder"]} done!')
