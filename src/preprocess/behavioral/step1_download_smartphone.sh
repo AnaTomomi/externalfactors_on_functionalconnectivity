@@ -4,7 +4,7 @@
 start=$1
 end=$2
 
-export session_id=0hi0w8xsd9iaaiwxcppqxmwr9793oh8s
+export session_id=cookies
 
 module load anaconda/2020-04-tf2
 
