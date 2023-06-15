@@ -23,7 +23,7 @@ addpath(genpath('/m/cs/scratch/networks-pm/software/bramila'));
 addpath('/m/cs/scratch/networks-pm/software/NIFTI');
 
 path = '/m/cs/project/networks-pm/mri/fast_prepro_bids';
-sub = 'sub-07';
+sub = 'sub-01';
 tasks = {'pvt', 'resting', 'movie', 'nback'};
 TR=0.594;
 
@@ -57,7 +57,7 @@ for idx=1:length(tasks)
     %Building the refdata structure
             
     % sampling interval of physiodata and fMRI (these were taken from Bramila).
-    biopacfile.dt=0.0005;%0.001; % in seconds/sample (0.0005 taken from the original mat file, isi field).
+    biopacfile.dt=0.0001;%0.001; % in seconds/sample (0.0005 taken from the original mat file, isi field).
     biopacfile.breath=0.01;%new sampling interval for breath it should not be higher than 2.4( for 25 inhales/min)
     biopacfile.HR=0.01; %new sampling interval for heart rate, should not be higher than 0.75(for 80 bpm)
     % set the range for frequencies in signals in bpm (try to keep those as narrow as posible)
