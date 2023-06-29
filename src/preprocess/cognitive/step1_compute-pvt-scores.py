@@ -65,7 +65,8 @@ for file in files:
     performance[idx] = 1-(no_lapse_false[idx]/len(pvt))
     lapse_prob[idx] = no_lapse/(len(pvt))
     
-    pvt.drop(pvt[pvt.Category=="false"].index, inplace=True)
+    #delete the false starts because their reaction time is negative
+    pvt.drop(pvt[pvt.Category=="false"].index, inplace=True) 
     
     median[idx] = pvt.RT.quantile(0.5)
     mean[idx] = pvt.RT.mean()
