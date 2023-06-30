@@ -23,6 +23,7 @@ https://doi.org/10.1093/sleep/34.5.581
 
 import os
 import sys
+import re
 import numpy as np
 import pandas as pd
 
@@ -40,16 +41,19 @@ for dir,_,_ in os.walk(path):
 print(f'preprocessing {str(len(files))} files..................')
 files.sort()
 
-median = [None]*len(files)
-mean = [None]*len(files)
-mean_1_RT = [None]*len(files)
-no_lapse_false = [None]*len(files)
-fast_rt = [None]*len(files)
-slow_rt = [None]*len(files)
-fast_1_RT = [None]*len(files)
-slow_1_RT = [None]*len(files)
-lapse_prob = [None]*len(files)
-performance = [None]*len(files)
+max_day = max(int(re.search('day-(\d+)', file).group(1)) for file in files)
+
+
+median = [None]*max_day
+mean = [None]*max_day
+mean_1_RT = [None]*max_day
+no_lapse_false = [None]*max_day
+fast_rt = [None]*max_day
+slow_rt = [None]*max_day
+fast_1_RT = [None]*max_day
+slow_1_RT = [None]*max_day
+lapse_prob = [None]*max_day
+performance = [None]*max_day
 
 
 for file in files:    
