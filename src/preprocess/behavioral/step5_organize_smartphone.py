@@ -26,22 +26,35 @@ data = {'folder': date_range.strftime('%Y-%m-%d'),
         'day': ['day-' + str(i).zfill(3) for i in range(1, len(date_range)+1)]}
 df = pd.DataFrame(data)
 
-#Now start moving the files and name them according to the convention
-all_data =[]
-for index, row in df.iterrows():
-    file = f'{path}/AwareESM.{row["folder"]}.csv'
-    if os.path.isfile(file):
-        data = pd.read_csv(file)
-        data['date'] = pd.to_datetime(data['time_asked'],unit='s').dt.tz_localize('UTC').dt.tz_convert('Europe/Helsinki')
-        #data['date'] = data['date'].dt.strftime('%d-%m-%Y %H:%M')
-        
-        data.set_index("date", inplace=True)
-        data.drop(columns=['user', 'device', 'time', 'time_asked', 'type', 
-               'instructions', 'submit', 'notification_timeout'], inplace=True)
-        all_data.append(data)
-    print(f'{row["folder"]} done!')
-    
-big_df = pd.concat(all_data)
-big_df.sort_index(inplace=True)
+#Dictionary with the sensor and the columns that will be deleted because they are not of interest
+sensor = {}
+sensor["AwareApplicationNotifications"] = ['user', 'device', 'time', 'defaults', 'sound', 'vibrate']
+sensor["AwareBattery"] = ['user', 'device', 'time', 'battery_health', 'battery_adaptor']
+sensor["AwareCalls"] = ['user', 'device', 'time']
+sensor["AwareESM"] = ['user', 'device', 'time', 'time_asked', 'type', 'instructions', 'submit', 'notification_timeout']
+sensor["AwareLocation"] = ['user', 'device', 'time', 'accuracy', 'double_speed', 'double_bearing', 'provider', 'label']
+sensor["AwareMessages"] = ['user', 'device', 'time']
+sensor["AwareScreen"] = ['user', 'device', 'time']
 
-big_df.to_csv(f'{savepath}/sub-01_day-all_device-smartphone_sensor-ema.csv')
+#Now start moving the files and name them according to the convention
+for key in sensor.keys():
+    print(f'Preprocessing {key} data.................')
+    all_data =[]
+    for index, row in df.iterrows():
+        file = f'{path}/{key}.{row["folder"]}.csv'
+        if os.path.isfile(file):
+            data = pd.read_csv(file)
+            if key == 'AwareESM':
+                data['date'] = pd.to_datetime(data['time_asked'],unit='s').dt.tz_localize('UTC').dt.tz_convert('Europe/Helsinki')
+            else:
+                data['date'] = pd.to_datetime(data['time'],unit='s').dt.tz_localize('UTC').dt.tz_convert('Europe/Helsinki')
+        
+            data.set_index("date", inplace=True)
+            data.drop(columns=sensor[key], inplace=True)
+            all_data.append(data)
+            print(f'{row["folder"]} done!')
+    
+    big_df = pd.concat(all_data)
+    big_df.sort_index(inplace=True)
+
+    big_df.to_csv(f'{savepath}/sub-01_day-all_device-smartphone_sensor-{key}.csv')
