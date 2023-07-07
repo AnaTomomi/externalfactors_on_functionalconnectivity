@@ -18,7 +18,7 @@ import pandas as pd
 #file = sys.argv[1]
 #savepath = sys.argv[2]
 
-file = "/m/cs/project/networks-pm/behavioral/sub-01_day-all_device-smartphone_sensor-ema.csv"
+file = "/m/cs/project/networks-pm/behavioral/sub-01_day-all_device-smartphone_sensor-AwareESM.csv"
 savepath = "/m/cs/scratch/networks-pm/effects_externalfactors_on_functionalconnectivity/data/behavioral"
 
 df = pd.read_csv(file, index_col="date", parse_dates=True)
@@ -46,7 +46,10 @@ df_strings = df[df['id'].isin(string_q)]
 df = df[~df['id'].isin(string_q)]
 
 # Convert answer to numbers
-df["answer"] = pd.to_numeric(df["answer"])
+df["answer"] = pd.to_numeric(df["answer"], errors='coerce')
+
+# the nans of the pm_05 to 1 because they come from a string saying how many hours the subject has exercised
+df.loc[(df['id'] == 'pm_05') & (df['answer'].isna()), 'answer'] = 1
 
 # Fix the date index and change the date to 'YYYY-MM-DD HH:MM' format
 df.reset_index(inplace=True)
@@ -65,34 +68,51 @@ menstruation_id = ['pm_18']
 substance_id = ['pm_04']
 exercise_id = ['pm_05']
 
-# Reverse the am_02 score
+# Reverse the am_02 score so that when we compute the sleep index, it is maximum when there were no nightmares
 df.loc[df['id'] == 'am_02', 'answer'] = 1 - df.loc[df['id'] == 'am_02', 'answer']
 
+#make some new dataframes for storing the information 
+affect, sleep, night = pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
+
 # Compute scores per time asked
-df['pa'] = df.loc[df['id'].isin(pa_ids), 'answer'].groupby('date').sum()
-df['na'] = df.loc[df['id'].isin(na_ids), 'answer'].groupby('date').sum()
-df['sleep'] = df.loc[df['id'].isin(sleep_ids), 'answer'].groupby('date').sum()
-df['pain'] = df.loc[df['id'].isin(pain_id), 'answer'].groupby('date').sum()
-df['stress'] = df.loc[df['id'].isin(stress_id), 'answer'].groupby('date').sum()
-df['menstruation'] = df.loc[df['id'].isin(menstruation_id), 'answer'].groupby('date').sum()
-df['substance'] = df.loc[df['id'].isin(substance_id), 'answer'].groupby('date').sum()
-df['exercise'] = df.loc[df['id'].isin(exercise_id), 'answer'].groupby('date').sum()
+affect['pa'] = df.loc[df['id'].isin(pa_ids), 'answer'].groupby('date').sum()
+affect['na'] = df.loc[df['id'].isin(na_ids), 'answer'].groupby('date').sum()
+affect['stress'] = df.loc[df['id'].isin(stress_id), 'answer'].groupby('date').sum()
+affect['pain'] = df.loc[df['id'].isin(pain_id), 'answer'].groupby('date').sum()
+affect.dropna(inplace=True) #drop if there are nans because it means the survey was not completed in its entirety
 
-# Compute the values per day 
-df.index = pd.to_datetime(df.index)
-df.index = df.index.strftime('%Y-%m-%d')
+sleep['sleep'] = df.loc[df['id'].isin(sleep_ids), 'answer'].groupby('date').sum()
 
-selected_ids = ["am_01", "dq_01", "pm_04", "pm_18", "pm_05"]
-df = df[df['id'].isin(selected_ids)]
-df.drop(columns=['answer', 'title'],inplace=True)
+night['menstruation'] = df.loc[df['id'].isin(menstruation_id), 'answer'].groupby('date').sum()
+night['substance'] = df.loc[df['id'].isin(substance_id), 'answer'].groupby('date').sum()
+night['exercise'] = df.loc[df['id'].isin(exercise_id), 'answer'].groupby('date').sum()
 
-scores = df.groupby([df.index, "id"]).median()
-scores.reset_index(inplace=True)
-scores = scores[scores["id"]=='dq_01']
-scores.set_index("date", inplace=True)
-scores.drop(columns=["id"], inplace=True)
+# Convert all date index to YYYY-MM-DD format
+affect.index = pd.to_datetime(affect.index)
+affect.index = affect.index.strftime('%Y-%m-%d')
+sleep.index = pd.to_datetime(sleep.index)
+sleep.index = sleep.index.strftime('%Y-%m-%d')
+night.index = pd.to_datetime(night.index)
+night.index = night.index.strftime('%Y-%m-%d')
 
-# Fill in the gaps with the mean, according to the registered report
-scores.fillna(round(scores.mean()), inplace=True)
+# Compute the scores for the PA and NA
+aggregations = {'pa': ['mean', 'median', 'min', 'max', 'std'],
+                'na': ['mean', 'median', 'min', 'max', 'std'],
+                'stress': ['mean', 'median', 'min', 'max', 'std'],
+                'pain': ['mean', 'median', 'min', 'max', 'std']}
 
-# Now on to the string-based replies
+df_agg = affect.groupby('date').agg(aggregations)
+df_agg.columns = ['_'.join(col) for col in df_agg.columns]
+
+#now merge with the other dataframes
+df = pd.merge(df_agg, night, on='date', how='outer')
+df = pd.merge(df, sleep, on='date', how='outer')
+
+# and fill the nans
+df = df.fillna(df.mean())
+
+# Now on to the string part
+
+
+# and save
+df.to_csv(f'{savepath}/sub-01_day-all_device-smartphone_sensor-EMA_.csv')
