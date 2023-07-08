@@ -111,8 +111,53 @@ df = pd.merge(df, sleep, on='date', how='outer')
 # and fill the nans
 df = df.fillna(df.mean())
 
-# Now on to the string part
+# Now on to the string part. First, let's convert the time into the YYYY-MM-DD format
+df_strings.reset_index(inplace=True)
+df_strings['date'] = df_strings['date'].apply(lambda x: x.replace(tzinfo=None))
+df_strings['date'] = df_strings['date'].dt.strftime('%Y-%m-%d')
 
+# Let's move to the alcohol and coffee
+df_pm = df_strings[df_strings['id'].isin(['pm_02', 'pm_03'])].copy()
+df_pm['answer'] = df_pm['answer'].apply(lambda x: min(map(int, x.split('-'))) if '-' in str(x) else pd.to_numeric(x, errors='coerce'))
+
+df_pm = df_pm.pivot(index='date', columns='id', values='answer')
+df_pm = df_pm.rename(columns={'pm_02': 'alcohol', 'pm_03': 'coffee-tea'})
+
+# let's separate the weight
+categories = {
+    'Yes. Written text': 1,
+    'Yes. In person': 2,
+    'Yes. Video meeting': 3,
+    'Yes. Written text, Yes. In person': 4,
+    'Yes. Written text, Yes. Video meeting': 5,
+    'Yes. In person, Yes. Video meeting': 6,
+    'Yes. Written text, Yes. In person, Yes. Video meeting': 7,
+    'Yes. Written text, Yes. Video meeting, Yes. In person': 7,
+    'Yes. Video meeting, Yes. In person, Yes. Written text': 7,
+    'No.': 0
+}
+
+df_social = df_strings[df_strings['id'] == 'pm_01'].copy()
+df_social['answer'] = df_social['answer'].map(categories)
+df_social = df_social.pivot(index='date', columns='id', values='answer')
+df_social = df_social.rename(columns={'pm_01': 'social'})
+
+# now let's fix the weight and other string
+df_text = df_strings[df_strings['id']=='dq_13']
+df_weight = df_text[df_text['answer'].str.contains('kg')]
+df_weight['weight'] = df_weight['answer'].apply(lambda x: float(x.split('kg')[0]))
+df_weight.set_index('date', inplace=True)
+df_weight = df_weight['weight']
+
+# and finally the strings
+df_string = df_text[~df_text['answer'].str.contains('kg')]
+df_string = df_string.groupby(['date'])['answer'].apply(', '.join)
+
+#merge all dataframes
+df = pd.merge(df, df_pm, on='date', how='outer')
+df = pd.merge(df, df_social, on='date', how='outer')
+df = pd.merge(df, df_weight, on='date', how='outer')
+df = pd.merge(df, df_string, on='date', how='outer')
 
 # and save
 df.to_csv(f'{savepath}/sub-01_day-all_device-smartphone_sensor-EMA_.csv')
