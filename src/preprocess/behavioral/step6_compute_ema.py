@@ -15,11 +15,8 @@ import os
 import sys
 import pandas as pd
 
-#file = sys.argv[1]
-#savepath = sys.argv[2]
-
-file = "/m/cs/project/networks-pm/behavioral/sub-01_day-all_device-smartphone_sensor-AwareESM.csv"
-savepath = "/m/cs/scratch/networks-pm/effects_externalfactors_on_functionalconnectivity/data/behavioral"
+file = sys.argv[1]
+savepath = sys.argv[2]
 
 df = pd.read_csv(file, index_col="date", parse_dates=True)
 
@@ -110,6 +107,7 @@ df = pd.merge(df, sleep, on='date', how='outer')
 
 # and fill the nans
 df = df.fillna(df.mean())
+df[['menstruation', 'substance', 'exercise', 'sleep']] = df[['menstruation', 'substance', 'exercise', 'sleep']].round()
 
 # Now on to the string part. First, let's convert the time into the YYYY-MM-DD format
 df_strings.reset_index(inplace=True)
@@ -159,5 +157,9 @@ df = pd.merge(df, df_social, on='date', how='outer')
 df = pd.merge(df, df_weight, on='date', how='outer')
 df = pd.merge(df, df_string, on='date', how='outer')
 
+# and again fill the gaps
+df[['alcohol', 'coffee-tea', 'social']] = df[['alcohol', 'coffee-tea', 'social']].fillna(df[['alcohol', 'coffee-tea', 'social']].mean())
+df[['alcohol', 'coffee-tea', 'social']] = df[['alcohol', 'coffee-tea', 'social']].round()
+
 # and save
-df.to_csv(f'{savepath}/sub-01_day-all_device-smartphone_sensor-EMA_.csv')
+df.to_csv(f'{savepath}/sub-01_day-all_device-smartphone_sensor-EMA.csv')
