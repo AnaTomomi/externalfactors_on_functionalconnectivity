@@ -81,7 +81,7 @@ for i, (key, series_list) in enumerate(fixation.items()):
         
 legend_handles = [mlines.Line2D([], [], color=sns.color_palette()[i], label=tasks[i]) for i in range(4)]
 fig.legend(handles=legend_handles, loc='upper center', ncol=5)
-
+plt.subplots_adjust(hspace = 0.5, wspace=0.3)
 plt.savefig(f'{save_dir}/quality-eyetracker_meas-fixdur_style-histogram.pdf')
 
 #plot the x and y position for the resting state, where we will use the eye-tracker info
