@@ -1,5 +1,5 @@
 #!/bin/bash -l
-#SBATCH --time=00:40:00 
+#SBATCH --time=01:30:00 
 #SBATCH --mem-per-cpu=45G
 #SBATCH -o /m/cs/scratch/networks-pm/jobs/denoise-%j.out
 
