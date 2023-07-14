@@ -68,7 +68,7 @@ microsleep = microsleep.pivot(index='subject', columns='task', values='sleep_per
 microsleep = microsleep[['pvt', 'resting', 'movie', 'nback']]
 
 #input the missing data 
-microsleep = microsleep.fillna((microsleep.mean()))
+#microsleep = microsleep.fillna((microsleep.mean()))
 
 #and save the data
 microsleep.to_csv(f'{save_dir}/sub-01_day-all_device-eyetracker.csv')
