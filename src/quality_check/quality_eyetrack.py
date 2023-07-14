@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 This script generates two plots to check the data quality for the eye-tracking 
 data. The first plot is a distribution of the fixation duration. According to 
