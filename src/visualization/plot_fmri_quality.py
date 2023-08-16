@@ -1,7 +1,9 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
-Created on Sat Jul 15 15:10:03 2023
+This script checks for data missing patterns in the fMRI data
+
+
+Input: path where all the preprocessed data is
+Output: path where the figure will be saved
 
 @author: trianaa1
 """

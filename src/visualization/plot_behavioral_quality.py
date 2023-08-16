@@ -1,3 +1,15 @@
+"""
+This script checks for data missing patterns in the aggregated behavioral data, 
+i.e. smartring, smartwatch, and smartphone
+
+
+Input: path where all the preprocessed data is
+Output: path where the figure will be saved
+
+@author: trianaa1
+"""
+
+
 import sys
 sys.path.insert(0, "/m/cs/scratch/networks-pm/effects_externalfactors_on_functionalconnectivity/src/quality_check")
 
@@ -13,14 +25,15 @@ import quality_utils as qu
 
 ######################### Pepare paths #######################################
 
-path = '/m/cs/scratch/networks-pm/effects_externalfactors_on_functionalconnectivity/data/behavioral'
+path = sys.argv[1]
+savepath = sys.argv[2]
 begin = '2023-01-01' 
 end = '2023-05-13' 
 
 #Smartring 
 data = pd.read_csv(f'{path}/sub-01_day-all_device-oura.csv')
 data.rename(columns={"Total Sleep Duration":"sleep \nduration", "Steps":"steps"}, inplace=True)
-data.set_index(pd.to_datetime(data["date"], infer_datetime_format=True), inplace=True)
+data.set_index(pd.to_datetime(data["date"], dayfirst=True), inplace=True)
 data = data.loc[begin:end]
 data.sort_index(inplace=True)
 
@@ -34,7 +47,7 @@ df2 = df2/1000 #in k-steps
 
 #smartphone ESM
 df3 = pd.read_csv(f'{path}/sub-01_day-all_device-smartphone_sensor-ema.csv')
-df3.set_index(pd.to_datetime(df3["date"], infer_datetime_format=True), inplace=True)
+df3.set_index(pd.to_datetime(df3["date"], yearfirst=True), inplace=True)
 df3 = df3["pa_mean"].to_frame()
 df3 = df3.loc[begin:end]
 df3.rename(columns={"pa_mean":"positive \naffect"}, inplace=True)
@@ -43,7 +56,7 @@ df3.rename(columns={"pa_mean":"positive \naffect"}, inplace=True)
 data = pd.read_csv(f'{path}/sub-01_day-all_device-embraceplus.csv')
 data.rename(columns={"timestamp_iso":"date", "mean_pulse_rate_bpm":"pulse \nrate (bpm)",
                     "mean_respiratory_rate_brpm":"respiration \nrate (bpm)"}, inplace=True)
-data.set_index(pd.to_datetime(data["date"], infer_datetime_format=True), inplace=True)
+data.set_index(pd.to_datetime(data["date"]), inplace=True)
 data = data.loc[begin:end]
 
 # empatica HR
@@ -56,7 +69,7 @@ df5 = data["respiration \nrate (bpm)"].to_frame()
 data = pd.read_csv(f'{path}/sub-01_day-all_device-smartphone_sensor-all.csv')
 data.rename(columns={"battery_mean_level":"battery \nlevel (%)",
                     "dist_total":"GPS-based \ndistance (km)"}, inplace=True)
-data.set_index(pd.to_datetime(data["date"], infer_datetime_format=True), inplace=True)
+data.set_index(pd.to_datetime(data["date"]), inplace=True)
 data = data.loc[pd.to_datetime(begin).tz_localize('Europe/Helsinki'):pd.to_datetime(end).tz_localize('Europe/Helsinki')]
 
 #smartphone battery
@@ -91,7 +104,7 @@ axes[0].xaxis.set_major_formatter(form)
 axes[6].set_xlabel('dates (DD-MM)')
 fig.align_ylabels(axes)
 fig.tight_layout()
-plt.show()
-plt.savefig('')
+#plt.show()
+plt.savefig(f'{savepath}/quality_behavioral.pdf')
 
 ##############################################################################

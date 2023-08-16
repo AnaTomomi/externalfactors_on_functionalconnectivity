@@ -1,3 +1,14 @@
+"""
+This script checks for data missing patterns in the preprocessed cognitive data, 
+i.e. PVT and n-back scores
+
+
+Input: path where all the preprocessed data is
+Output: path where the figure will be saved
+
+@author: trianaa1
+"""
+
 import sys
 sys.path.insert(0, "/m/cs/scratch/networks-pm/effects_externalfactors_on_functionalconnectivity/src/quality_check")
 
@@ -12,8 +23,8 @@ import quality_utils as qu
 
 ######################### Pepare paths #######################################
 
-path = '/m/cs/scratch/networks-pm/effects_externalfactors_on_functionalconnectivity/data/cognitive'
-savepath = '/m/cs/scratch/networks-pm/effects_externalfactors_on_functionalconnectivity/results'
+path = sys.argv[1]
+savepath = sys.argv[2]
 begin = '2023-01-01' 
 end = '2023-05-13' 
 

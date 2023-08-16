@@ -1,9 +1,15 @@
 """
-Created on Sat Jul 15 16:17:22 2023
+This script checks for completeness of data. It requires all datasources and 
+plots a heatmap where the % of completeness in each data source is shown. It 
+also visualizes every Sunday, easing visual inspection. 
+
+Input: path where all the preprocessed data is
+Output: path where the figure will be saved
 
 @author: trianaa1
 """
 
+import sys
 import pandas as pd
 import numpy as np
 
@@ -14,8 +20,8 @@ import matplotlib.dates as mdates
 import numpy as np
 
 
-path = '/m/cs/scratch/networks-pm/effects_externalfactors_on_functionalconnectivity/data'
-savepath = '/m/cs/scratch/networks-pm/effects_externalfactors_on_functionalconnectivity/results'
+path = sys.argv[1]
+savepath = sys.argv[2]
 begin = '2023-01-01'
 end = '2023-05-13'
 
