@@ -8,7 +8,7 @@ task = argv[2]
 strategy = argv[3]
 
 nii = f'/m/cs/scratch/networks-pm/pm_denoise/{subject}/{subject}_task-{task}_SGdetrend.nii'
-confound = f'/m/cs/scratch/networks-pm/pm_denoise/{subject}/{subject}_task-{task}_detrended-confounds.csv'
+confound = f'/m/cs/scratch/networks-pm/pm_denoise/{subject}/{subject}_task-{task}_detrended-confounds-{strategy}.csv'
 out = f'/m/cs/scratch/networks-pm/pm_denoise/{subject}/{subject}_task-{task}_SGdetrend_{strategy}_HPF.nii'
 
 tr = 0.594
