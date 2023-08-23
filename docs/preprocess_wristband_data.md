@@ -7,8 +7,8 @@ Preprocessing these data implies: merging the data from different embrace stream
 
 ## Preprocessing steps
 1. Download the data from the empatica cloud system, following their instructions. The script step2_download_empatica.sh can be used. Note that the AWS configuration needs to be done beforehand. After, the first path in the code needs to be changed.
-2. run the script ./src/preprocess/behavioral/step3_organize_empatica.py PATH SAVEPATH, where PATH is the path up until the daily folders from empatica start, and SAVEPATH is the path where the new files will be created. This script will create one file per day. 
-3. run the script ./src/preprocess/behavioral/step4_aggregate_empatica.py PATH SAVEPATH, where PATH is the path where all the empatica files are, and SAVEPATH is the path where the new files will be created. 
+2. run the script ./src/preprocess/behavioral/step3_organize_empatica.py PATH SAVEPATH, where PATH is the path up until the daily folders from empatica start, and SAVEPATH is the path where the new files will be created. This script will create one file per day, merging the different measurements in one table. 
+3. run the script ./src/preprocess/behavioral/step4_aggregate_empatica.py PATH SAVEPATH, where PATH is the path where all the empatica files are, and SAVEPATH is the path where the new files will be created. This script will compute basic statistics on the different measurements and aggregate the data per day. 
 
 # Quality check
 The wristband quality check is the percentage of data loss within a day. 
