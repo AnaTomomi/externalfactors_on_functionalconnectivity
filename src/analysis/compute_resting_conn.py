@@ -70,7 +70,7 @@ elif atlas_name=='seitzman-set2':
 masked_atlas = f'{conn_path}/group_mask_{atlas_name}.nii'
 
 if not os.path.exists(masked_atlas):
-    gmask = nib.load(group_mask_sum_name)
+    gmask = nib.load(group_mask_mult_name)
     gmask_data = gmask.get_fdata()
     atlas_nii = nib.load(atlas)
     atlas_data = atlas_nii.get_fdata()
@@ -124,15 +124,18 @@ masker = NiftiLabelsMasker(labels_img=masked_atlas, standardize=True)
 files = sorted(glob.glob(conn_path + f'/{strategy}/*{strategy}*.nii*', recursive=True))
 roi_ts_file = f'{conn_path}/{strategy}/averaged_roits_{strategy}_{atlas_name}.mat'
 all_ts = []
-for file in files:
-    head, tail = os.path.split(file)
-    print(f'Creating node time series for {file}')
-    time_series = masker.fit_transform(file)
-    all_ts.append(time_series)
-rs_ts = list2mat(all_ts)
-savemat(roi_ts_file, {'rs_ts':rs_ts})
+if not os.path.exists(roi_ts_file):
+    for file in files:
+        head, tail = os.path.split(file)
+        print(f'Creating node time series for {file}')
+        time_series = masker.fit_transform(file)
+        all_ts.append(time_series)
+    rs_ts = list2mat(all_ts)
+    savemat(roi_ts_file, {'rs_ts':rs_ts})
 
 #Compute the adjacency matrices and apply Fisher transform
+all_ts = loadmat(roi_ts_file)
+all_ts = all_ts['rs_ts'][0]
 all_ts = [pd.DataFrame(ts) for ts in all_ts]
 con = [ts.corr(method='pearson') for ts in all_ts]
 for df in con:
@@ -171,5 +174,5 @@ inv_fisher = [np.tanh(matrix) for matrix in regressed]
 conn = list2mat(inv_fisher)
 
 #Save the connectivity matrices
-conn_file = f'{conn_path}/rs-adj_{strategy}_{atlas_name}.mat'
+conn_file = f'{conn_path}/{strategy}/reg-adj_{strategy}_{atlas_name}.mat'
 savemat(conn_file, {'conn':conn})
