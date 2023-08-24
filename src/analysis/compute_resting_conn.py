@@ -15,7 +15,7 @@ nii_path = '/m/cs/scratch/networks-pm/pm_denoise/'
 fmriprep_path = '/m/cs/scratch/networks-pm/pm_preprocessed/'
 conn_path = '/m/cs/scratch/networks-pm/effects_externalfactors_on_functionalconnectivity/data/mri/conn_matrix/rs'
 strategy = '24HMP-8Phys-4GSR-Spike_HPF'
-atlas_name = 'seitzman-set1'
+atlas_name = 'seitzman-set2'
 vol_size = [91,109,91]
 cuts = [47, 1057]
 
