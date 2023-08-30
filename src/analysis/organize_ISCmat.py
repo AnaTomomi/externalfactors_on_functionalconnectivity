@@ -1,5 +1,11 @@
 """
-This script organizes the time-series to be passed on to the ISCstats toolbox
+This script organizes the time-series to be passed on to the ISCstats toolbox.
+It also computes the ISC maps and tests for significance according to 
+(Chen et al., 2016).
+
+Chen et al., 2016. Untangling the relatedness among correlations, part I: 
+nonparametric approaches to inter-subject correlation analysis at the group 
+level. NeuroImage, 142, 248-259.
 
 @author: trianaa1
 """
@@ -11,11 +17,17 @@ from scipy.io import savemat, loadmat
 
 import nibabel as nib
 from nilearn.maskers import NiftiLabelsMasker
+from nilearn.plotting import plot_glass_brain
 
-from sklearn.linear_model import LinearRegression
+from brainiak.isc import isc, compute_summary_statistic
+
+from nltools.data import Brain_Data
+from nltools.stats import isc, fdr, threshold
+from nltools.mask import expand_mask, roi_to_brain
+
 
 sys.path.append('/m/cs/scratch/networks-pm/effects_externalfactors_on_functionalconnectivity/src/analysis')
-from utils import compute_groupmasks, list2mat
+from utils import list2mat, compute_groupmasks, compute_averagedROIts
 
 ###############################################################################
 # Input variables: modify these accordingly
@@ -23,27 +35,34 @@ from utils import compute_groupmasks, list2mat
 nii_path = '/m/cs/scratch/networks-pm/pm_denoise/'
 fmriprep_path = '/m/cs/scratch/networks-pm/pm_preprocessed/'
 conn_path = '/m/cs/scratch/networks-pm/effects_externalfactors_on_functionalconnectivity/data/mri/conn_matrix/movie'
-strategy = '24HMP-8Phys-4GSR-Spike_HPF'
+strategy = '24HMP-8Phys-Spike_HPF'
 atlas_name = 'seitzman-set1'
 vol_size = [91,109,91]
 cuts = [47, 1018]
 scrub = 'hard'
-thr = 0.2
-percent = 0.1 
+thr = 0.2 #scrubbing threshold FD>scrub_thr
+percent = 0.05
 task = 'movie'
-
+n_per = 10000
 ###############################################################################
 
-files = sorted(glob.glob(nii_path + f'/**/*movie_*{strategy}.nii', recursive=True))
+# 1. compute the group masks
+group_atlas = compute_groupmasks(conn_path, fmriprep_path, task, vol_size, atlas_name)
 
-#Scrub the images
+# 2. compute the averaged-ROI timeseries
+roi_ts_file = compute_averagedROIts(nii_path, conn_path, task, strategy, group_atlas)
+
+# 3. cut away the washout parts
+all_ts = loadmat(roi_ts_file)['rs_ts'][0]
+all_ts = [pd.DataFrame(ts) for ts in all_ts]
+all_ts = [df.loc[cuts[0]:cuts[1]] for df in all_ts]
+
+# 4. scrub the timeseries according to the FD
+subjects = ['sub-{0:02d}'.format(i) for i in range(1, 31)]
 
 #First, we need to know what volumes will be scrubbed from all images
 fds = []
-for file in files:
-    head, tail = os.path.split(file)
-    subject = tail[0:6]
-    
+for subject in subjects:    
     #Read the FD of the image
     confound = pd.read_csv(f'{fmriprep_path}{subject}/func/{subject}_task-movie_desc-confounds_timeseries.tsv', sep='\t')
     fd = confound['framewise_displacement'].loc[cuts[0]:cuts[1]]
@@ -51,8 +70,6 @@ for file in files:
     fd.rename(columns={'framewise_displacement':subject}, inplace=True)
     fds.append(fd)
 fds = pd.concat(fds, axis=1)
-fds.reset_index(inplace=True)
-fds.drop(["index"], axis=1, inplace=True)
     
 if scrub=='hard':
     idx = fds.index[fds.gt(thr).any(axis=1)].tolist()
@@ -61,43 +78,35 @@ else:
     idx = fds.index[fds.isna().any(axis=1)].tolist()
 
 #Now we scrub the volumes
-for file in files:
-    head, tail = os.path.split(file)
-    subject = tail[0:6]
-    if scrub=='hard':
-        scrubbed_file = f'{conn_path}/{strategy}/{tail[:-4]}_scrubbed-{scrub}_{str(thr)}.nii'
-    else:
-        scrubbed_file = f'{conn_path}/{strategy}/{tail[:-4]}_scrubbed-{scrub}_{str(thr)}-{str(percent)}.nii'
-    
-    if not os.path.exists(scrubbed_file):
-        #Read the image
-        nii = nib.load(file)
-        cropped_nii = nii.slicer[:,:,:,cuts[0]:cuts[1]+1]
-    
-        #scrub
-        mask = np.ones(cropped_nii.shape[3],dtype=bool)
-        mask[idx]=False
-        data = cropped_nii.get_fdata()
-        scrubbed = data[:,:,:,mask]
-        scrubbed_nii = nib.Nifti1Image(scrubbed, nii.affine, nii.header)
-        nib.save(scrubbed_nii,scrubbed_file)
-        print(f'scrubbing for {scrubbed_file} done!')
-    else:
-        print(f'{scrubbed_file} already exists, no scrubbing done')
+all_ts = [df.drop(index=idx) for df in all_ts]
+print(f'{len(idx)} vols scrubbed')
 
-#Compute the group masks
-masked_atlas = compute_groupmasks(conn_path, fmriprep_path, task, strategy, vol_size, atlas_name)
 
-#Compute the averaged ROI-ts
-masker = NiftiLabelsMasker(labels_img=masked_atlas, standardize=True)
-files = sorted(glob.glob(conn_path + f'/{strategy}/*{strategy}*.nii*', recursive=True))
-roi_ts_file = f'{conn_path}/{strategy}/averaged_roits_{strategy}_{atlas_name}_scrubbed-{scrub}_{str(thr)}-{str(percent)}.mat'
-all_ts = []
-if not os.path.exists(roi_ts_file):
-    for file in files:
-        head, tail = os.path.split(file)
-        print(f'Creating node time series for {file}')
-        time_series = masker.fit_transform(file)
-        all_ts.append(time_series)
-    rs_ts = list2mat(all_ts)
-    savemat(roi_ts_file, {'rs_ts':rs_ts})
+# 5. compute the ISC 
+idc_mean = isc(all_ts, pairwise=True, summary_statistic='median')
+
+# 6. compute ISC maps
+n_trs = all_ts[0].shape[0]
+n_rois = all_ts[0].shape[1]
+n_sub = len(all_ts)
+data =  np.empty((n_trs, n_sub, n_rois))
+for i, df in enumerate(all_ts):
+    data[:, i, :] = df.values
+
+isc_r, isc_p = {}, {}
+for roi in range(n_rois):
+   idc = isc(data[:,:,roi], metric='median', method='circle_shift', n_bootstraps=n_per, return_bootstraps=True)
+   isc_r[roi], isc_p[roi] = idc['isc'], idc['p']
+   print(roi)
+
+mask = Brain_Data(masked_atlas)
+mask_x = expand_mask(mask)
+isc_r_brain, isc_p_brain = roi_to_brain(pd.Series(isc_r), mask_x), roi_to_brain(pd.Series(isc_p), mask_x)
+isc_nii = isc_r_brain.to_nifti()
+plot_glass_brain(isc_nii, colorbar=True)
+
+from brainiak.isc import isc
+data_braniak = data.transpose(0, 2, 1)
+isc_output = isc(data, pairwise=True, summary_statistic=None, tolerate_nans=True)
+
+
