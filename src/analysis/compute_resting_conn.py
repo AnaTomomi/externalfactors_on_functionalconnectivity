@@ -1,156 +1,59 @@
-import glob, os
+import glob, os, sys
 import numpy as np
 import pandas as pd
 from scipy.io import savemat, loadmat
 
-import nibabel as nib
-from nilearn.maskers import NiftiLabelsMasker
-
 from sklearn.linear_model import LinearRegression
+
+sys.path.append('/m/cs/scratch/networks-pm/effects_externalfactors_on_functionalconnectivity/src/analysis')
+from utils import list2mat, compute_groupmasks, compute_averagedROIts
 
 ###############################################################################
 # Input variables: modify these accordingly
-
 nii_path = '/m/cs/scratch/networks-pm/pm_denoise/'
 fmriprep_path = '/m/cs/scratch/networks-pm/pm_preprocessed/'
 conn_path = '/m/cs/scratch/networks-pm/effects_externalfactors_on_functionalconnectivity/data/mri/conn_matrix/rs'
-strategy = '24HMP-8Phys-4GSR-Spike_HPF'
+task = 'resting'
+strategy = '24HMP-8Phys-Spike_HPF'
 atlas_name = 'seitzman-set2'
 vol_size = [91,109,91]
 cuts = [47, 1057]
-
-###############################################################################
-# Helper function
-def list2mat(a):
-    b = np.empty((len(a),), dtype=object)
-    for i in range(len(a)):
-        b[i] = a[i]  
-    return b
-
+scrub_thr = 0.2 #scrubbing threshold FD>scrub_thr
 ###############################################################################
 
-#Make a list of files, subjects to preprocess
-files = sorted(glob.glob(nii_path + f'/**/*resting_*{strategy}.nii', recursive=True))
+# 1. compute the group mask according to the atlas we select
+group_atlas = compute_groupmasks(conn_path, fmriprep_path, task, vol_size, atlas_name)
 
-#Compute the group mask
-group_mask_mult_name = f'{conn_path}/group_mask_mult.nii'
-group_mask_sum_name = f'{conn_path}/group_mask_sum95.nii'
-if not os.path.exists(group_mask_mult_name) or not os.path.exists(group_mask_sum_name):
-    group_mask_mult = np.ones(vol_size)
-    group_mask_sum = np.zeros(vol_size)
-    for file in files:
-        head, tail = os.path.split(file)
-        subject = tail[0:6]
-        if not subject=='sub-09':
-            mask = nib.load(f'{fmriprep_path}/{subject}/func/{subject}_task-resting_space-MNI152NLin6Asym_res-2_desc-brain_mask.nii')
-        else:
-            # sub-09 mask had a big cut in the frontal, superior part. Thus, the sub-09 was denoised with the PVT brain mask
-            mask = nib.load(f'{fmriprep_path}/{subject}/func/{subject}_task-pvt_space-MNI152NLin6Asym_res-2_desc-brain_mask.nii')
-            
-        data = mask.get_fdata()
-        group_mask_mult = group_mask_mult*data
-        group_mask_sum = group_mask_sum+data
-    thr = np.amax(group_mask_sum)*0.95
-    group_mask_sum[group_mask_sum<thr] = 0 #set values that are not in the 95% percentile of the mask to zero
-    # i.e. if a voxel is in 95% of the cases, it stays
-    group_mask_sum[group_mask_sum>0] = 1
+# 2. compute the averaged-ROI timeseries
+roi_ts_file = compute_averagedROIts(nii_path, conn_path, task, strategy, group_atlas)
 
-    group_mask_nii = nib.Nifti1Image(group_mask_mult, mask.affine, mask.header)
-    nib.save(group_mask_nii,group_mask_mult_name)
-    group_mask_nii = nib.Nifti1Image(group_mask_sum, mask.affine, mask.header)
-    nib.save(group_mask_nii,group_mask_sum_name)
-    print(f'Group mask computed for {len(files)} files')
-    
-#Multiply the group mask by the atlas
-if atlas_name=='seitzman-set1':
-    atlas = '/m/cs/scratch/networks-pm/atlas/300_ROI_Set/seitzman_set1.nii'
-elif atlas_name=='seitzman-set2':
-    atlas = '/m/cs/scratch/networks-pm/atlas/300_ROI_Set/seitzman_set2.nii'
-
-masked_atlas = f'{conn_path}/group_mask_{atlas_name}.nii'
-
-if not os.path.exists(masked_atlas):
-    gmask = nib.load(group_mask_mult_name)
-    gmask_data = gmask.get_fdata()
-    atlas_nii = nib.load(atlas)
-    atlas_data = atlas_nii.get_fdata()
-    atlas_data = np.reshape(atlas_data, vol_size)
-
-    atlas_mask = gmask_data*atlas_data
-    atlas_mask_nii = nib.Nifti1Image(atlas_mask, atlas_nii.affine, atlas_nii.header)
-
-    nib.save(atlas_mask_nii,masked_atlas)
-    print(f'Masked {atlas_name} atlas with group mask')
-
-
-#Clip and scrub the images
-for file in files:
-    head, tail = os.path.split(file)
-    subject = tail[0:6]
-    scrubbed_file = f'{conn_path}/{strategy}/{tail[:-4]}_scrubbed.nii'
-    
-    if not os.path.exists(scrubbed_file):
-        #Read the image
-        nii = nib.load(file)
-    
-        #discard the first 30 seconds of data. 30s*0.594TR = 50.50vols. Therefore, we need
-        #to discard 51 vols, but we have already cut 5 in step 4. So, we need to cut 46 vols
-        #and then get 10 minutes of the data (i.e. 1011vols*0.594TR=600.534 seg)
-        cropped_nii = nii.slicer[:,:,:,cuts[0]:cuts[1]+1]
-
-        #Read the FD of the image
-        confound = pd.read_csv(f'{fmriprep_path}{subject}/func/{subject}_task-resting_desc-confounds_timeseries.tsv', sep='\t')
-        fd = confound['framewise_displacement'].loc[cuts[0]:cuts[1]]
-        fd = fd.to_frame().reset_index()
-    
-        #detect FD>0.2 to scrub
-        idx = fd[fd['framewise_displacement'].gt(0.2)].index.to_numpy()
-        print(f'{len(idx)} vols scrubbed')
-    
-        #scrub
-        mask = np.ones(len(fd),dtype=bool)
-        mask[idx]=False
-        data = cropped_nii.get_fdata()
-        scrubbed = data[:,:,:,mask]
-        scrubbed_nii = nib.Nifti1Image(scrubbed, nii.affine, nii.header)
-        nib.save(scrubbed_nii,scrubbed_file)
-        print(f'scrubbing for {scrubbed_file} done!')
-    else:
-        print(f'{scrubbed_file} already exists, no scrubbing done')
-    
-
-#Average ROI time series
-masker = NiftiLabelsMasker(labels_img=masked_atlas, standardize=True)
-files = sorted(glob.glob(conn_path + f'/{strategy}/*{strategy}*.nii*', recursive=True))
-roi_ts_file = f'{conn_path}/{strategy}/averaged_roits_{strategy}_{atlas_name}.mat'
-all_ts = []
-if not os.path.exists(roi_ts_file):
-    for file in files:
-        head, tail = os.path.split(file)
-        print(f'Creating node time series for {file}')
-        time_series = masker.fit_transform(file)
-        all_ts.append(time_series)
-    rs_ts = list2mat(all_ts)
-    savemat(roi_ts_file, {'rs_ts':rs_ts})
-
-#Compute the adjacency matrices and apply Fisher transform
-all_ts = loadmat(roi_ts_file)
-all_ts = all_ts['rs_ts'][0]
+# 3. cut away the washout parts
+all_ts = loadmat(roi_ts_file)['rs_ts'][0]
 all_ts = [pd.DataFrame(ts) for ts in all_ts]
+all_ts = [df.loc[cuts[0]:cuts[1]] for df in all_ts]
+
+# 4. scrub the timeseries according to the FD
+subjects = ['sub-{0:02d}'.format(i) for i in range(1, 31)]
+for i, subject in enumerate(subjects):
+    confound = pd.read_csv(f'{fmriprep_path}{subject}/func/{subject}_task-resting_desc-confounds_timeseries.tsv', sep='\t')
+    fd = confound['framewise_displacement'].loc[cuts[0]:cuts[1]]
+    fd = fd.to_frame()
+    idx = fd[fd['framewise_displacement'].gt(scrub_thr)].index.to_numpy() #detect FD>0.2 to scrub
+    all_ts[i] = all_ts[i].drop(index=idx)
+    print(f'{len(idx)} vols scrubbed from subject {subject}')
+
+# 5. Compute the adjacency matrices and apply Fisher transform
 con = [ts.corr(method='pearson') for ts in all_ts]
 for df in con:
     np.fill_diagonal(df.values,0) #set diagonal values to zero to avoid self-loops
 fisher = [np.arctanh(matrix.values) for matrix in con]
 
-#Load the mean FD
+# 6. regress mean FD for all links
 fd_path = '/'.join(conn_path.rsplit('/', 2)[:-2])
-mean_fd = pd.read_csv(f'{fd_path}/sub-01_day-all_device-mri_meas-meanfd.csv')
-mean_fd = mean_fd['resting']
-mean_fd = np.array(mean_fd).reshape(-1,1)
+mean_fd = pd.read_csv(f'{fd_path}/sub-01_day-all_device-mri_meas-meanfd.csv')[task]
 
-#Regress mean FD for all links
 clf = LinearRegression(fit_intercept=True)
-x = mean_fd
+x = np.array(mean_fd).reshape(-1,1)
 
 regressed = [np.zeros_like(matrix) for matrix in fisher]
 idx = np.triu_indices(len(fisher[0]),1) #gets two lists of indexes, idx[0] = rows and idx[1] = columns
