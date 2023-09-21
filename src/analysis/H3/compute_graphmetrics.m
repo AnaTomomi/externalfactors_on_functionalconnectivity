@@ -5,16 +5,25 @@ clc
 addpath(genpath('/m/cs/scratch/networks-pm/software/BCT'))
 
 path = '/m/cs/scratch/networks-pm/effects_externalfactors_on_functionalconnectivity/data/mri/conn_matrix/rs';
-strategy = '24HMP-8Phys-Spike_HPF';
+strategy = '24HMP-8Phys-4GSR-Spike_HPF';
 atlas_name = 'seitzman-set1';
 
+%Load the data
 adj =  load(sprintf('%s/%s/reg-adj_%s_%s.mat', path, strategy, strategy, atlas_name));
 adj = adj.conn;
 
+%Load the information about the community affiliation vector
+atlas_info = readtable(sprintf('%s/group_%s_info.xlsx',path, atlas_name));
+if strcmp(atlas_name,'seitzman-set1')
+    comm = atlas_info.netWorkbenchLabel;
+else
+    comm = atlas_info.network;
+end
+
 n_subs = size(adj,2);
-comm = size(adj{1,1},1);
+n_rois = size(adj{1,1},1);
 eff = zeros(n_subs,1);
-pc = zeros(n_subs,comm);
+pc = zeros(n_subs,n_rois);
 for i=1:n_subs
     a = adj{1,i};
     a(a<=0) = 0; %discard negative correlations
