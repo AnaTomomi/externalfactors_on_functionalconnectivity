@@ -8,7 +8,7 @@ path = "/m/cs/scratch/networks-pm/effects_externalfactors_on_functionalconnectiv
 beh_path = "/m/cs/scratch/networks-pm/effects_externalfactors_on_functionalconnectivity/data/"
 save_path = "/m/cs/scratch/networks-pm/effects_externalfactors_on_functionalconnectivity/results/H3"
 strategy = "24HMP-8Phys-Spike_HPF"
-atlas_name = "seitzman-set1"
+atlas_name = "seitzman-set2"
 
 # Set seed for reproducibility
 set.seed(0)
@@ -46,4 +46,4 @@ for (i in 1:num_rois) {
   result_df <- rbind(result_df, result_col)
 }
 save_file = paste(save_path, paste0("parti-coeff_", strategy, "_", atlas_name, ".csv"), sep="/")
-write.csv(result_df, save_file, row.names = FALSE)
+write.csv(result_df, save_file, row.names = TRUE)

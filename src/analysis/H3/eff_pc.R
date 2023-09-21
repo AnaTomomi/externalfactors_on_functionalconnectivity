@@ -6,8 +6,8 @@ library(car)
 path = "/m/cs/scratch/networks-pm/effects_externalfactors_on_functionalconnectivity/data/mri/conn_matrix/rs"
 beh_path = "/m/cs/scratch/networks-pm/effects_externalfactors_on_functionalconnectivity/data/"
 save_path = "/m/cs/scratch/networks-pm/effects_externalfactors_on_functionalconnectivity/results/H3"
-strategy = "24HMP-8Phys-4GSR-Spike_HPF"
-atlas_name = "seitzman-set2"
+strategy = "24HMP-8Phys-Spike_HPF"
+atlas_name = "seitzman-set1"
 
 # Set seed for reproducibility
 set.seed(0)
@@ -44,31 +44,31 @@ save_file = paste(save_path, paste0("global-eff_", strategy, "_", atlas_name, ".
 write.csv(result_df, save_file, row.names = TRUE)
 
 #sanity checks
-hist(model$residuals, main = "Histogram of Residuals", xlab = "Residuals")
-qqnorm(model$residuals)
-qqline(model$residuals)
-vif(model) #colinearity
+#hist(model$residuals, main = "Histogram of Residuals", xlab = "Residuals")
+#qqnorm(model$residuals)
+#qqline(model$residuals)
+#vif(model) #colinearity
 
 # Calculate residuals
-residuals <- residuals(model)
+#residuals <- residuals(model)
 
 # Create a scatterplot of max_respiratory_rate_brpm vs. residuals
-library(ggplot2)
-ggplot(data, aes(x = max_respiratory_rate_brpm, y = residuals)) +
-  geom_point() +
-  geom_hline(yintercept = 0, color = "red", linetype = "dashed") +
-  labs(x = "max_respiratory_rate_brpm", y = "Residuals") +
-  ggtitle("Scatterplot of max_respiratory_rate_brpm vs. Residuals")
+#library(ggplot2)
+#ggplot(data, aes(x = max_respiratory_rate_brpm, y = residuals)) +
+ # geom_point() +
+  #geom_hline(yintercept = 0, color = "red", linetype = "dashed") +
+  #labs(x = "max_respiratory_rate_brpm", y = "Residuals") +
+  #ggtitle("Scatterplot of max_respiratory_rate_brpm vs. Residuals")
 
 # Create a scatterplot of the data
-ggplot(data, aes(x = max_respiratory_rate_brpm, y = eff)) +
-  geom_point() +  # Add the scatterplot points
-  geom_smooth(method = "lm", se = FALSE, color = "blue") +  # Add the regression line
-  labs(x = "max_respiratory_rate_brpm", y = "global efficiency", title = "global efficiency")
+#ggplot(data, aes(x = max_respiratory_rate_brpm, y = eff)) +
+ # geom_point() +  # Add the scatterplot points
+  #geom_smooth(method = "lm", se = FALSE, color = "blue") +  # Add the regression line
+  #labs(x = "max_respiratory_rate_brpm", y = "global efficiency", title = "global efficiency")
 
 # removing variables with high collinearity
-model <- lm(eff ~ total_sleep_duration + awake_time + restless_sleep + pa_mean + pa_std + stress_mean + pain_mean + mean_respiratory_rate_brpm + min_respiratory_rate_brpm + max_respiratory_rate_brpm + mean_prv_rmssd_ms + max_prv_rmssd_ms + eye.resting, data = data)
-summary(model)
+#model <- lm(eff ~ total_sleep_duration + awake_time + restless_sleep + pa_mean + pa_std + stress_mean + pain_mean + mean_respiratory_rate_brpm + min_respiratory_rate_brpm + max_respiratory_rate_brpm + mean_prv_rmssd_ms + max_prv_rmssd_ms + eye.resting, data = data)
+#summary(model)
 
-model <- lm(eff ~ total_sleep_duration + awake_time + restless_sleep + pa_mean  + stress_mean + pain_mean + mean_respiratory_rate_brpm + mean_prv_rmssd_ms + eye.resting, data = data)
-summary(model)
+#model <- lm(eff ~ total_sleep_duration + awake_time + restless_sleep + pa_mean  + stress_mean + pain_mean + mean_respiratory_rate_brpm + mean_prv_rmssd_ms + eye.resting, data = data)
+#summary(model)
