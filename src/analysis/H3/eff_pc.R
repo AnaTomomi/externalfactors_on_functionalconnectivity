@@ -1,12 +1,13 @@
 library(R.matlab)
 library(xlsx)
 library(car)
+library(lmPerm)
 
 #set the variables
 path = "/m/cs/scratch/networks-pm/effects_externalfactors_on_functionalconnectivity/data/mri/conn_matrix/rs"
 beh_path = "/m/cs/scratch/networks-pm/effects_externalfactors_on_functionalconnectivity/data/"
 save_path = "/m/cs/scratch/networks-pm/effects_externalfactors_on_functionalconnectivity/results/H3"
-strategy = "24HMP-8Phys-Spike_HPF"
+strategy = "24HMP-8Phys-4GSR-Spike_HPF"
 atlas_name = "seitzman-set1"
 
 # Set seed for reproducibility
@@ -28,13 +29,13 @@ eye$resting <- ifelse(is.na(eye$resting), 0, eye$resting) #fill in the NaNs with
 data <- data.frame(eff, beh, eye$resting)
 
 # Fit the linear model
-model <- lm(eff ~ total_sleep_duration + awake_time + restless_sleep + pa_mean + pa_std + na_mean + stress_mean + pain_mean + mean_respiratory_rate_brpm + min_respiratory_rate_brpm + max_respiratory_rate_brpm + median_respiratory_rate_brpm + mean_prv_rmssd_ms + min_prv_rmssd_ms + max_prv_rmssd_ms + eye.resting, data = data)
+model <- lmp(eff ~ total_sleep_duration + awake_time + restless_sleep + pa_mean + pa_std + na_mean + stress_mean + pain_mean + mean_respiratory_rate_brpm + min_respiratory_rate_brpm + max_respiratory_rate_brpm + median_respiratory_rate_brpm + mean_prv_rmssd_ms + min_prv_rmssd_ms + max_prv_rmssd_ms + eye.resting, data = data, perm="Prob", maxIter=10000, Ca=1e-09)
 summary(model)
 
 # Extracting values
 model_summary <- summary(model)
-result_df <- data.frame(t_values = model_summary$coefficients[, "t value"], 
-                        p_values = model_summary$coefficients[, "Pr(>|t|)"], 
+result_df <- data.frame(estimate = model_summary$coefficients[,"Estimate"],
+                        p_values = model_summary$coefficients[, "Pr(Prob)"], 
                         r_squared = model_summary$r.squared, 
                         adj_r_squared = model_summary$adj.r.squared,
                         f_statistic = model_summary$fstatistic[1],
