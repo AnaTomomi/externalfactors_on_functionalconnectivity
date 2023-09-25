@@ -2,6 +2,7 @@ library(R.matlab)
 library(xlsx)
 library(car)
 library(lmPerm)
+library(boot)
 
 #set the variables
 path = "/m/cs/scratch/networks-pm/effects_externalfactors_on_functionalconnectivity/data/mri/conn_matrix/rs"
@@ -29,47 +30,34 @@ eye$resting <- ifelse(is.na(eye$resting), 0, eye$resting) #fill in the NaNs with
 data <- data.frame(eff, beh, eye$resting)
 
 # Fit the linear model
-model <- lmp(eff ~ total_sleep_duration + awake_time + restless_sleep + pa_mean + pa_std + na_mean + stress_mean + pain_mean + mean_respiratory_rate_brpm + min_respiratory_rate_brpm + max_respiratory_rate_brpm + median_respiratory_rate_brpm + mean_prv_rmssd_ms + min_prv_rmssd_ms + max_prv_rmssd_ms + eye.resting, data = data, perm="Prob", maxIter=10000, Ca=1e-09)
-summary(model)
+formula_str <- eff ~ total_sleep_duration + awake_time + restless_sleep + pa_mean + pa_std + na_mean + stress_mean + pain_mean + mean_respiratory_rate_brpm + min_respiratory_rate_brpm + max_respiratory_rate_brpm + median_respiratory_rate_brpm + mean_prv_rmssd_ms + min_prv_rmssd_ms + max_prv_rmssd_ms + eye.resting
+model <- lmp(formula_str, data = data, perm="Prob", maxIter=10000, Ca=1e-09, center=FALSE)
+model_summary <- summary(model)
+
+# Manual standardization for all coefficients including the intercept
+predictors <- names(coef(model))  
+standardized_betas <- numeric(length(predictors))
+
+for (i in 1:length(standardized_betas)) {
+  predictor <- predictors[i]
+  if (predictor == "(Intercept)") {
+    standardized_betas[i] <- coef(model)[predictor] - sum(coef(model)[-1] * colMeans(data[predictors[-1]]))
+  } else {
+    standardized_betas[i] <- coef(model)[predictor] * sd(data[[predictor]]) / sd(data$eff)
+  }
+}
 
 # Extracting values
-model_summary <- summary(model)
 result_df <- data.frame(estimate = model_summary$coefficients[,"Estimate"],
                         p_values = model_summary$coefficients[, "Pr(Prob)"], 
                         r_squared = model_summary$r.squared, 
                         adj_r_squared = model_summary$adj.r.squared,
                         f_statistic = model_summary$fstatistic[1],
-                        f_p_value = pf(model_summary$fstatistic[1], model_summary$fstatistic[2], model_summary$fstatistic[3], lower.tail = FALSE))
+                        f_p_value = pf(model_summary$fstatistic[1], model_summary$fstatistic[2], model_summary$fstatistic[3], lower.tail = FALSE),
+                        standardized_betas = standardized_betas
+                        )
 
 save_file = paste(save_path, paste0("global-eff_", strategy, "_", atlas_name, ".csv"), sep="/")
 write.csv(result_df, save_file, row.names = TRUE)
 
-#sanity checks
-#hist(model$residuals, main = "Histogram of Residuals", xlab = "Residuals")
-#qqnorm(model$residuals)
-#qqline(model$residuals)
-#vif(model) #colinearity
 
-# Calculate residuals
-#residuals <- residuals(model)
-
-# Create a scatterplot of max_respiratory_rate_brpm vs. residuals
-#library(ggplot2)
-#ggplot(data, aes(x = max_respiratory_rate_brpm, y = residuals)) +
- # geom_point() +
-  #geom_hline(yintercept = 0, color = "red", linetype = "dashed") +
-  #labs(x = "max_respiratory_rate_brpm", y = "Residuals") +
-  #ggtitle("Scatterplot of max_respiratory_rate_brpm vs. Residuals")
-
-# Create a scatterplot of the data
-#ggplot(data, aes(x = max_respiratory_rate_brpm, y = eff)) +
- # geom_point() +  # Add the scatterplot points
-  #geom_smooth(method = "lm", se = FALSE, color = "blue") +  # Add the regression line
-  #labs(x = "max_respiratory_rate_brpm", y = "global efficiency", title = "global efficiency")
-
-# removing variables with high collinearity
-#model <- lm(eff ~ total_sleep_duration + awake_time + restless_sleep + pa_mean + pa_std + stress_mean + pain_mean + mean_respiratory_rate_brpm + min_respiratory_rate_brpm + max_respiratory_rate_brpm + mean_prv_rmssd_ms + max_prv_rmssd_ms + eye.resting, data = data)
-#summary(model)
-
-#model <- lm(eff ~ total_sleep_duration + awake_time + restless_sleep + pa_mean  + stress_mean + pain_mean + mean_respiratory_rate_brpm + mean_prv_rmssd_ms + eye.resting, data = data)
-#summary(model)
