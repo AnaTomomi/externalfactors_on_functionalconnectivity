@@ -12,8 +12,8 @@ result_path <- '/m/cs/scratch/networks-pm/effects_externalfactors_on_functionalc
 beh_path = "/m/cs/scratch/networks-pm/effects_externalfactors_on_functionalconnectivity/data/"
 save_path = "/m/cs/scratch/networks-pm/effects_externalfactors_on_functionalconnectivity/results/H3"
 strategy = "24HMP-8Phys-Spike_HPF"
-atlas_name = "seitzman-set2"
-measure = 'parti-coeff'#'reg-links'
+atlas_name = "seitzman-set1"
+measure = 'parti-coeff' #'reg-links' or 'parti-coeff'
 
 # Set seed for reproducibility
 set.seed(0)
@@ -30,8 +30,13 @@ save_file = paste(save_path, paste0(measure,"_", strategy, "_", atlas_name, ".cs
 result_2mod_file <- read.csv(save_file)
 
 #get the col_number (i) for which we need to compute the confidence intervals
-non_zero_rows <- apply(file[,-1], 1, function(row) any(row != 0))
-to_compute <- file$node[non_zero_rows]
+if (measure == 'parti-coeff') {
+  non_zero_rows <- apply(file[,-1], 1, function(row) any(row != 0))
+  to_compute <- file$node[non_zero_rows]
+} else if (measure == 'reg-links') {
+  non_zero_rows <- apply(file[,-c(1, 18, 19)], 1, function(row) any(row != 0))
+  to_compute <- file$link[non_zero_rows]
+}
 
 # load the dependent variable
 pc <- readMat(paste(path, strategy, paste0(measure,"_", strategy, "_", atlas_name, ".mat"), sep="/"))
@@ -81,4 +86,4 @@ for (i in to_compute) {
   result_2mod_file[row_to_update, "CI_upper"] <- CI_upper
 }
 
-#write.csv(result_2mod_file, save_file, row.names = TRUE)
+write.csv(result_2mod_file, save_file, row.names = TRUE)

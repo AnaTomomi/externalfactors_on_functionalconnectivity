@@ -4,8 +4,8 @@ clc
 
 path = '/m/cs/scratch/networks-pm/effects_externalfactors_on_functionalconnectivity/results/H3';
 strategy = '24HMP-8Phys-Spike_HPF';
-atlas_name = 'seitzman-set1';
-to_correct = 'parti-coeff'; %'reg-links' or 'parti-coeff'
+atlas_name = 'seitzman-set2';
+to_correct = 'reg-links'; %'reg-links' or 'parti-coeff'
 
 if strcmp(atlas_name,'seitzman-set1')
     matrixSize = 130;
