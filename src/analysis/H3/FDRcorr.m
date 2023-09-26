@@ -5,7 +5,7 @@ clc
 path = '/m/cs/scratch/networks-pm/effects_externalfactors_on_functionalconnectivity/results/H3';
 strategy = '24HMP-8Phys-Spike_HPF';
 atlas_name = 'seitzman-set1';
-to_correct = 'reg-links'; %'reg-links' or 'parti-coeff'
+to_correct = 'parti-coeff'; %'reg-links' or 'parti-coeff'
 
 if strcmp(atlas_name,'seitzman-set1')
     matrixSize = 130;
@@ -17,11 +17,7 @@ filepath = sprintf('%s/%s_%s_%s.csv', path, to_correct, strategy, atlas_name);
 data = readtable(filepath);
 
 data = data(~contains(data.Var1, 'Intercept'), :); % Filter out the intercept
-if strcmp(to_correct,'parti-coeff')
-    data = data(:,[1,3,8]); %select only the needed columns
-else
-    data = data(:,[1,3,9]); %select only the needed columns
-end
+data = data(:,[1,3,9]); %select only the needed columns
 data.Var1 = regexprep(data.Var1, '\d+$', ''); %set the same variable names for all
 totest = unstack(data, 'p_values','Var1'); % Pivot the table
 
