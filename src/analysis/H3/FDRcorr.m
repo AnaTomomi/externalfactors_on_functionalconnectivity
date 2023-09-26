@@ -7,11 +7,21 @@ strategy = '24HMP-8Phys-Spike_HPF';
 atlas_name = 'seitzman-set1';
 to_correct = 'reg-links'; %'reg-links' or 'parti-coeff'
 
+if strcmp(atlas_name,'seitzman-set1')
+    matrixSize = 130;
+else
+    matrixSize = 141;
+end
+
 filepath = sprintf('%s/%s_%s_%s.csv', path, to_correct, strategy, atlas_name);
 data = readtable(filepath);
 
 data = data(~contains(data.Var1, 'Intercept'), :); % Filter out the intercept
-data = data(:,[1,3,8]); %select only the needed columns
+if strcmp(to_correct,'parti-coeff')
+    data = data(:,[1,3,8]); %select only the needed columns
+else
+    data = data(:,[1,3,9]); %select only the needed columns
+end
 data.Var1 = regexprep(data.Var1, '\d+$', ''); %set the same variable names for all
 totest = unstack(data, 'p_values','Var1'); % Pivot the table
 
@@ -35,6 +45,14 @@ for colName = colNamesToIterate
     qvals(qvals > 0.05) = 0;
     data_BH.(colName{1}) = qvals_bh;
     data_fdr.(colName{1}) = qvals;
+end
+
+if strcmp(to_correct,'reg-links')
+    [idx(:,1),idx(:,2)]= ind2sub([matrixSize, matrixSize], find(triu(ones(matrixSize), 1)==1));
+    data_BH.('row') = idx(:,1);
+    data_BH.('column') = idx(:,2);
+    data_fdr.('row') = idx(:,1);
+    data_fdr.('column') = idx(:,2);
 end
 
 writetable(data_BH, sprintf('%s/%s_%s_%s_BHcorrected.xlsx', path, to_correct, strategy, atlas_name))
