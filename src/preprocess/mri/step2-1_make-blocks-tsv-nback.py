@@ -126,5 +126,4 @@ for file in filtered_files:
                 df.at[idx, 'duration'] = df.at[idx+1, 'onset'] - row['onset']
             except KeyError:  # In case idx+1 doesn't exist
                 pass
-    
-    df.to_csv(f'{savepath}/{subject}/func/{subject}_task-pvt_events.tsv', sep='\t', index=False)
+    df.to_csv(f'{savepath}/{subject}/func/{subject}_task-nback_events.tsv', sep='\t', index=False)
