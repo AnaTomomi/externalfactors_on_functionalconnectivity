@@ -126,7 +126,7 @@ def compute_averagedROIts(nii_path, conn_path, task, strategy, group_atlas):
             savemat(roi_ts_file, {'rs_ts':rs_ts})
     return roi_ts_file
     
-def get_behav_data_movie(behav_path, lag):
+def get_behav_data_movie(behav_path, variable, lag):
     ''' selects the behavioral data for specific days before the scanner (lag). 
     In this case, only behavioral scores that are relaated to H4 in the 
     paper are selected. 
@@ -140,46 +140,51 @@ def get_behav_data_movie(behav_path, lag):
     -------
     filtered_behav: DataFrame with the selected information
     '''
-    sleep = pd.read_csv(os.path.join(behav_path, 'sub-01_day-all_device-oura.csv'))
-    sleep = sleep[['date','Total Sleep Duration', 'Awake Time','Restless Sleep',
-                  'Sleep Efficiency','Sleep Latency']] #as defined in the paper
-
-    phys = pd.read_csv(os.path.join(behav_path, 'sub-01_day-all_device-embraceplus.csv'))
-    phys = phys[['date','mean_respiratory_rate_brpm', 'min_respiratory_rate_brpm',
+    if variable == 'sleep':    
+        behav = pd.read_csv(os.path.join(behav_path, 'sub-01_day-all_device-oura.csv'))
+        behav = behav[['date','total_sleep_duration', 'awake_time','restless_sleep',
+                  'sleep_efficiency','sleep_latency']] #as defined in the paper
+        behav['date'] = pd.to_datetime(behav['date'], format='%d-%m-%Y')
+    elif variable=='mood':
+        behav = pd.read_csv(os.path.join(behav_path, 'sub-01_day-all_device-smartphone_sensor-ema.csv'))
+        behav = behav[['date','pa_mean', 'pa_median', 'pa_min', 'pa_max', 'pa_std', 'na_mean',
+                   'na_median', 'na_min', 'na_max', 'na_std', 'stress_mean',
+                   'stress_median', 'stress_min', 'stress_max', 'stress_std', 'pain_mean',
+                   'pain_median', 'pain_min', 'pain_max', 'pain_std']]
+        behav['date'] = pd.to_datetime(behav['date'], format='%Y-%m-%d')
+    else:
+        behav = pd.read_csv(os.path.join(behav_path, 'sub-01_day-all_device-embraceplus.csv'))
+        behav = behav[['date','mean_respiratory_rate_brpm', 'min_respiratory_rate_brpm',
                      'max_respiratory_rate_brpm','median_respiratory_rate_brpm',
                      'std_respiratory_rate_brpm','mean_prv_rmssd_ms', 'min_prv_rmssd_ms', 
                      'max_prv_rmssd_ms','median_prv_rmssd_ms','std_prv_rmssd_ms']]
-
-    mood = pd.read_csv(os.path.join(behav_path, 'sub-01_day-all_device-smartphone_sensor-ema.csv'))
-    mood = mood[['date','pa_mean', 'pa_median', 'pa_min', 'pa_max', 'pa_std', 'na_mean',
-               'na_median', 'na_min', 'na_max', 'na_std', 'stress_mean',
-               'stress_median', 'stress_min', 'stress_max', 'stress_std', 'pain_mean',
-               'pain_median', 'pain_min', 'pain_max', 'pain_std']]
-
-    # unify the date format
-    sleep['date'] = pd.to_datetime(sleep['date'], format='%d-%m-%Y')
-    mood['date'] = pd.to_datetime(mood['date'], format='%Y-%m-%d')
-    phys['date'] = pd.to_datetime(phys['date']).dt.tz_convert(None)  # Remove timezone information
-    phys['date'] = phys['date'].dt.date  # Keep only the date part
-    phys['date'] = pd.to_datetime(phys['date'], format='%Y-%m-%d')
-
-    # merge dataframe
-    behav = pd.merge(sleep, mood, on='date', how='outer')
-    behav = pd.merge(behav, phys, on='date', how='outer')
-        
+        behav['date'] = pd.to_datetime(behav['date']).dt.tz_convert(None)  # Remove timezone information
+        behav['date'] = behav['date'].dt.date  # Keep only the date part
+        behav['date'] = pd.to_datetime(behav['date'], format='%Y-%m-%d')
+    
     #fill in the nans with the mean 
     behav.fillna(round(behav.mean(numeric_only=True)), inplace=True)
+    cols = [col for col in list(behav.columns) if col != 'date']
+    normalized_data = behav[cols]
+    
+    normalized_data = (normalized_data - normalized_data.mean()) / normalized_data.std() #normalize by z-score
+    #normalized_data = (filtered_behav-np.min(filtered_behav))/(np.max(filtered_behav)-np.min(filtered_behav))
+    normalized_data.dropna(axis=1, inplace=True) #discard those values with no variation at all
+    normalized_data['date'] = behav['date']
+    behav = normalized_data
 
     #select the days
     scan_days = pd.read_csv(os.path.join(f'{behav_path.rsplit("/", 2)[0]}/mri','sub-01_day-all_device-mri.csv'), header=0)
     scan_days = scan_days[['date']]
     scan_days['date'] = pd.to_datetime(scan_days['date'], format='%d/%m/%y')
+    if variable =='sleep': 
+        lag = lag-1 # to match the oura way of storing the data
     scan_days['date'] = scan_days['date'] - pd.Timedelta(days=lag)
 
     #select the days
     filtered_behav = behav[behav['date'].isin(scan_days['date'])]
     filtered_behav.drop(columns=['date'], inplace=True)
-        
+    
     return filtered_behav
 
 def nearest_neighbors(data):
@@ -200,11 +205,12 @@ def nearest_neighbors(data):
     for i in range(n_sub):
         for j in range(n_sub):
             if i < j:
-                dist_ij = 1-(abs(euclidean(data.iloc[i,:].values, data.iloc[j,:].values))/n_sub)
+                dist_ij = abs(euclidean(data.iloc[i,:].values, data.iloc[j,:].values))
                 nn[i,j] = dist_ij
                 nn[j,i] = dist_ij
-    nn_scaled = (nn-np.min(nn))/(np.max(nn)-np.min(nn))
-    return nn_scaled
+    nn = nn/np.max(nn)
+    nn = 1-nn
+    return nn
 
 def anna_karenina(data):
     ''' computes the simmilarity matrix in a matrix between pairs of observations
@@ -224,10 +230,53 @@ def anna_karenina(data):
     for i in range(n_sub):
         for j in range(n_sub):
             if i < j:
-                dist_ij = 1 - (abs(np.linalg.norm((data.iloc[i,:].values + data.iloc[j,:].values)/2))/n_sub) #calculate distance between i and j
+                dist_ij = np.linalg.norm((data.iloc[i,:].values + data.iloc[j,:].values)/2) #calculate distance between i and j
                 ak[i,j] = dist_ij
                 ak[j,i] = dist_ij
 
-    ak_scaled = (ak-np.min(ak))/(np.max(ak)-np.min(ak))
-    np.fill_diagonal(ak_scaled, 1)
-    return ak_scaled
+    ak = ak/np.max(ak)
+    ak = 1-ak
+    return ak
+
+def get_behav_data_tasks(behav_path, lag):
+    ''' selects the behavioral data for specific days before the scanner (lag). 
+    In this case, only behavioral scores that are relaated to H4 in the 
+    paper are selected. 
+    
+    Parameters
+    ----------
+    behav_path: folder path to where the behavioral data files are
+    lag: number of days before the scanner to select
+    
+    Returns
+    -------
+    filtered_behav: DataFrame with the selected information
+    '''
+    
+    behav = pd.read_csv(os.path.join(behav_path, 'sub-01_day-all_device-oura.csv'))
+    behav = behav[['date','total_sleep_duration','sleep_efficiency','sleep_latency',
+                   'Steps', 'Inactive Time']] #as defined in the paper
+    behav['date'] = pd.to_datetime(behav['date'], format='%d-%m-%Y')
+    
+    #fill in the nans with the mean 
+    behav.fillna(round(behav.mean(numeric_only=True)), inplace=True)
+
+    #select the days
+    scan_days = pd.read_csv(os.path.join(f'{behav_path.rsplit("/", 2)[0]}/data/mri','sub-01_day-all_device-mri.csv'), header=0)
+    scan_days = scan_days[['date']]
+    scan_days['date'] = pd.to_datetime(scan_days['date'], format='%d/%m/%y')
+    
+    scan_days_activity = (scan_days['date'] - pd.Timedelta(days=lag)).to_frame()
+    lag = lag-1 # to match the oura way of storing the data for the sleep
+    scan_days_sleep = (scan_days['date'] - pd.Timedelta(days=lag)).to_frame()
+
+    #select the days
+    activity_behav = behav[behav['date'].isin(scan_days_activity['date'])]
+    activity_behav = activity_behav[['Steps', 'Inactive Time']]
+    
+    sleep_behav = behav[behav['date'].isin(scan_days_sleep['date'])]
+    sleep_behav = sleep_behav[['total_sleep_duration','sleep_efficiency','sleep_latency']]
+    
+    filtered_behav = pd.concat([sleep_behav.reset_index(drop=True), activity_behav.reset_index(drop=True)], axis=1,ignore_index=True)
+    
+    return filtered_behav
