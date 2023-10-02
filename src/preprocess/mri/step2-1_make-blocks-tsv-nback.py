@@ -17,8 +17,8 @@ import pandas as pd
 
 from glob import glob
 
-path = sys.argv[1]
-savepath = sys.argv[2]
+path = '/m/cs/project/networks-pm/cognitive'#sys.argv[1]
+savepath = '/m/cs/project/networks-pm/mri/fast_prepro_bids'#sys.argv[2]
 
 tr = 0.594
 nii_length = 614
@@ -53,9 +53,15 @@ for file in filtered_files:
     pulse_info['Time'] = (pulse_info['Time']-mri_pulse_time)-(5*(tr*1000))
 
     #add the first line
-    pvt_start = pulse_info[pulse_info['Time'] == 0]
+    #check when does the nback start
+    for i in range(len(pulse_info) - 1):
+        if pulse_info['Trial'].iloc[i] == '4' and pulse_info['Trial'].iloc[i + 1] != '4':
+            nback_start = pulse_info.iloc[i]
+    
+    #add the first event which is the washout out cross
+    first_row = pd.DataFrame([{'onset': 0, 'duration': nback_start["Time"]/1000, 'trial_type': 'intro'}])
+    
     info = pulse_info[pulse_info['Code'].isin(['dual_block', 'feedback'])]
-    info = pd.concat([pvt_start, info])
 
     df = pd.DataFrame(columns=['onset','duration','trial_type'])
     df['onset'] = info['Time']
@@ -78,4 +84,7 @@ for file in filtered_files:
     
     df[['onset','duration']] = df[['onset','duration']]/1000
     
-    df.to_csv(f'{savepath}/{subject}/func/{subject}_task-nback_events.tsv', sep='\t', index=False)
+    #merge with the first row
+    df = pd.concat([first_row, df])
+    
+    df.to_csv(f'/m/cs/scratch/networks-pm/pm_denoise/{subject}/{subject}_task-nback_blocks.tsv', sep='\t', index=False)
