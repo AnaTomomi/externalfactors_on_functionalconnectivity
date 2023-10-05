@@ -11,6 +11,8 @@ from scipy.spatial.distance import euclidean
 
 import nibabel as nib
 from nilearn.maskers import NiftiLabelsMasker
+from nilearn.glm.first_level.design_matrix import make_first_level_design_matrix
+from nilearn.glm.first_level import FirstLevelModel
 
 from sklearn.linear_model import LinearRegression
 
@@ -240,7 +242,7 @@ def anna_karenina(data):
 
 def get_behav_data_tasks(behav_path, lag):
     ''' selects the behavioral data for specific days before the scanner (lag). 
-    In this case, only behavioral scores that are relaated to H4 in the 
+    In this case, only behavioral scores that are relaated to H1 and H2 in the 
     paper are selected. 
     
     Parameters
@@ -254,8 +256,8 @@ def get_behav_data_tasks(behav_path, lag):
     '''
     
     behav = pd.read_csv(os.path.join(behav_path, 'sub-01_day-all_device-oura.csv'))
-    behav = behav[['date','total_sleep_duration','sleep_efficiency','sleep_latency',
-                   'Steps', 'Inactive Time']] #as defined in the paper
+    behav = behav[['date','total_sleep_duration', 'awake_time','restless_sleep',
+              'sleep_efficiency','sleep_latency', 'Steps', 'Inactive Time']] #as defined in the paper
     behav['date'] = pd.to_datetime(behav['date'], format='%d-%m-%Y')
     
     #fill in the nans with the mean 
@@ -275,8 +277,191 @@ def get_behav_data_tasks(behav_path, lag):
     activity_behav = activity_behav[['Steps', 'Inactive Time']]
     
     sleep_behav = behav[behav['date'].isin(scan_days_sleep['date'])]
-    sleep_behav = sleep_behav[['total_sleep_duration','sleep_efficiency','sleep_latency']]
+    sleep_behav = sleep_behav[['total_sleep_duration', 'awake_time','restless_sleep',
+                               'sleep_efficiency','sleep_latency']]
     
     filtered_behav = pd.concat([sleep_behav.reset_index(drop=True), activity_behav.reset_index(drop=True)], axis=1,ignore_index=True)
+    filtered_behav.rename(columns={0: "total_sleep_duration", 1: "awake_time", 2:"restless_sleep",
+                                   3: "sleep_efficiency", 4: "sleep_latency", 5:"steps", 6:"inactive_time"}, inplace=True)
     
     return filtered_behav
+
+def get_behav_data_15days(behav_path, days=15):
+    ''' selects the behavioral data for specific days before the scanner (lag). 
+    In this case, behavioral scores that are relaated to H1, H2, and H3 in the 
+    paper are selected. 
+    
+    Parameters
+    ----------
+    behav_path: folder path to where the behavioral data files are
+    lag: number of days before the scanner to select
+    
+    Returns
+    -------
+    filtered_behav: DataFrame with the selected information according to the scanner days
+    '''
+    sleep = pd.read_csv(os.path.join(behav_path, 'sub-01_day-all_device-oura.csv'))
+    sleep = sleep[['date','total_sleep_duration', 'awake_time','restless_sleep',
+                  'sleep_efficiency','sleep_latency', 'Steps','Inactive Time']] #as defined in the paper
+    sleep.rename(columns={'Steps':'steps', 'Inactive Time':'inactive_time'},inplace=True)
+    sleep['date'] = pd.to_datetime(sleep['date'], format='%d-%m-%Y')
+    sleep.set_index('date', inplace=True)
+    
+    mood = pd.read_csv(os.path.join(behav_path, 'sub-01_day-all_device-smartphone_sensor-ema.csv'))
+    mood = mood[['date','pa_mean', 'pa_median', 'pa_min', 'pa_max', 'pa_std', 'na_mean',
+                   'na_median', 'na_min', 'na_max', 'na_std', 'stress_mean',
+                   'stress_median', 'stress_min', 'stress_max', 'stress_std', 'pain_mean',
+                   'pain_median', 'pain_min', 'pain_max', 'pain_std']]
+    mood['date'] = pd.to_datetime(mood['date'], format='%Y-%m-%d')
+    mood.set_index('date', inplace=True)
+    
+    phys = pd.read_csv(os.path.join(behav_path, 'sub-01_day-all_device-embraceplus.csv'))
+    phys = phys[['date','mean_respiratory_rate_brpm', 'min_respiratory_rate_brpm',
+                     'max_respiratory_rate_brpm','median_respiratory_rate_brpm',
+                     'std_respiratory_rate_brpm','mean_prv_rmssd_ms', 'min_prv_rmssd_ms', 
+                     'max_prv_rmssd_ms','median_prv_rmssd_ms','std_prv_rmssd_ms']]
+    phys['date'] = pd.to_datetime(phys['date']).dt.tz_convert(None)  # Remove timezone information
+    phys['date'] = phys['date'].dt.date  # Keep only the date part
+    phys['date'] = pd.to_datetime(phys['date'], format='%Y-%m-%d')
+    phys.set_index('date', inplace=True)
+    
+    behav = pd.concat([sleep, mood, phys], axis=1)
+    
+    #fill in the nans with the mean 
+    behav.fillna(round(behav.mean(numeric_only=True)), inplace=True)
+
+    #select the days
+    scan_days = pd.read_csv(os.path.join(f'{behav_path.rsplit("/", 2)[0]}/data/mri','sub-01_day-all_device-mri.csv'), header=0)
+    scan_days = scan_days[['date']]
+    scan_days['date'] = pd.to_datetime(scan_days['date'], format='%d/%m/%y')
+    
+    # Create lag variables
+    columns = list(behav.columns)
+    for lag in range(days):  # up to 2 lags (you can adjust this as needed)
+        for col in columns:
+            behav[f"{col}{lag}"] = behav[col].shift(lag)
+
+    # Merge dataframes
+    merged_df = pd.merge(scan_days, behav, left_on="date", right_on="date", how="left")
+
+    # Keep only relevant columns
+    final_cols = ['date'] + [f"{col}{i}" for i in range(days) for col in columns]
+    filtered_behav = merged_df[final_cols]
+    
+    return filtered_behav
+
+def make_designmat(file, path, task, strategy):
+    nii = nib.load(file)
+    subject = file.split('/')[-3]
+    
+    # Make the regression matrix (convolved with the HRF)
+    print("Creating the design matrix")
+    hrf_model = 'glover'
+    tr = nii.header["pixdim"][4]
+    n_vols = nii.header["dim"][4]
+    frame_times = np.arange(n_vols) * tr
+    
+    if task == 'pvt':
+        events = pd.read_csv(f'{path}/{subject}/func/{subject}_task-{task}_events.tsv', sep='\t')
+        events.rename(columns={"response_time":"modulation"},inplace=True)
+        events = events[['onset','trial_type','duration','modulation']]
+        events.fillna(0.01, inplace=True)
+    else:
+        events = pd.read_csv(f'{path}/{subject}/func/{subject}_task-{task}_blocks.tsv', sep='\t')
+        events = events[['onset','trial_type','duration']]
+        
+    confounds = pd.read_csv(f'{path}/{subject}/func/{subject}_task-{task}_desc-confounds_timeseries.tsv', sep='\t')
+    hr_rr = loadmat(f'{path}/{subject}/func/{subject}_task-{task}_device-biopac_downsampledcut.mat')
+    hr_rr = hr_rr['downsampled_cut'].T
+    confounds[['heart_rate', 'respiration_rate']] = hr_rr
+        
+    hmp = ['trans_x','trans_y','trans_z','rot_x','rot_y','rot_z','trans_x_derivative1','trans_y_derivative1',
+               'trans_z_derivative1','trans_x_power2','trans_y_power2','trans_z_power2','trans_x_derivative1_power2',
+               'trans_y_derivative1_power2','trans_z_derivative1_power2','rot_x_derivative1','rot_y_derivative1',
+               'rot_z_derivative1','rot_x_power2','rot_y_power2','rot_z_power2','rot_x_derivative1_power2',
+               'rot_y_derivative1_power2','rot_z_derivative1_power2']
+    phys = ['csf','csf_derivative1','csf_power2','csf_derivative1_power2','white_matter','white_matter_derivative1',
+                'white_matter_power2','white_matter_derivative1_power2','heart_rate', 'respiration_rate']
+    gs = ['global_signal','global_signal_derivative1','global_signal_derivative1_power2','global_signal_power2']
+    motion = [s for s in list(confounds.columns) if "motion_outlier" in s]
+        
+    if strategy=='24HMP-8Phys-Spike_HPF':
+        confound_names = hmp+phys+motion
+    elif strategy=='24HMP-8Phys-4GSR-Spike_HPF':
+        confound_names = hmp+phys+gs+motion
+    else:
+        raise ValueError('Strategy not found!')
+        
+    confounds = confounds[confound_names]
+    confounds.fillna(0, inplace=True)
+    design_matrix = make_first_level_design_matrix(frame_times, events, hrf_model=hrf_model, 
+                                                   drift_model='cosine', high_pass=0.01, 
+                                                   add_regs=confounds, add_reg_names=confound_names)        
+    return design_matrix
+
+def make_first_level(file, path, task, design_matrix):
+    nii = nib.load(file)
+    subject = file.split('/')[-3]
+    
+    if subject == 'sub-25' and task=='nback':
+        #there is a cut in the nback mask for subject 25, so we will use the resting-state mask
+        mask = f'{path}/{subject}/func/{subject}_task-resting_space-MNI152NLin6Asym_res-2_desc-brain_mask.nii'
+    else:
+        mask = f'{path}/{subject}/func/{subject}_task-{task}_space-MNI152NLin6Asym_res-2_desc-brain_mask.nii'
+    
+    hrf_model = 'glover'
+    tr = nii.header["pixdim"][4]
+    
+    # First-level model
+    flm = FirstLevelModel(t_r=tr, slice_time_ref=0, hrf_model=hrf_model, 
+                          drift_model='cosine', high_pass=0.1, smoothing_fwhm=6,
+                          mask_img=mask, noise_model='ar1', standardize=False, n_jobs=-1, 
+                          minimize_memory=False, verbose=True,subject_label=subject)
+    print(f'fit the model for {subject}')
+    flm.fit(run_imgs=nii, design_matrices=design_matrix)
+    
+    if task == 'pvt':
+        ok_lapse = flm.compute_contrast('OK', stat_type='t', output_type='z_score')
+        return ok_lapse
+    else:
+        one_twoback = flm.compute_contrast('twoback-oneback', stat_type='t', output_type='z_score')
+        return one_twoback
+
+def lss_transformer(df, row_number):
+    """Label one trial for one LSS model.
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        BIDS-compliant events file information.
+    row_number : int
+        Row number in the DataFrame.
+        This indexes the trial that will be isolated.
+
+    Returns
+    -------
+    df : pandas.DataFrame
+        Update events information, with the select trial's trial type isolated.
+    trial_name : str
+        Name of the isolated trial's trial type.
+    """
+    df = df.copy()
+
+    # Determine which number trial it is *within the condition*
+    trial_condition = df.loc[row_number, "trial_type"]
+    trial_type_series = df["trial_type"]
+    trial_type_series = trial_type_series.loc[
+        trial_type_series == trial_condition
+    ]
+    trial_type_list = trial_type_series.index.tolist()
+    trial_number = trial_type_list.index(row_number)
+
+    # We use a unique delimiter here (``__``) that shouldn't be in the
+    # original condition names.
+    # Technically, all you need is for the requested trial to have a unique
+    # 'trial_type' *within* the dataframe, rather than across models.
+    # However, we may want to have meaningful 'trial_type's (e.g., 'Left_001')
+    # across models, so that you could track individual trials across models.
+    trial_name = f"{trial_condition}__{trial_number:03d}"
+    df.loc[row_number, "trial_type"] = trial_name
+    return df, trial_name
