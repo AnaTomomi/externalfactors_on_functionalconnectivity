@@ -421,7 +421,10 @@ def make_first_level(file, path, task, design_matrix):
     flm.fit(run_imgs=nii, design_matrices=design_matrix)
     
     if task == 'pvt':
-        ok_lapse = flm.compute_contrast('OK', stat_type='t', output_type='z_score')
+        if 'lapse' in design_matrix.columns:
+            ok_lapse = flm.compute_contrast('OK+lapse', stat_type='t', output_type='z_score')
+        else:
+            ok_lapse = flm.compute_contrast('OK', stat_type='t', output_type='z_score')
         return ok_lapse
     else:
         one_twoback = flm.compute_contrast('twoback-oneback', stat_type='t', output_type='z_score')

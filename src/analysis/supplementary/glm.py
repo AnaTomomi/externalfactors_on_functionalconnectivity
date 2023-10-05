@@ -14,8 +14,8 @@ from utils import make_first_level, make_designmat
 
 path = '/m/cs/scratch/networks-pm/pm_preprocessed'
 savepath = '/m/cs/scratch/networks-pm/effects_externalfactors_on_functionalconnectivity/results/supplementary'
-task = 'nback'
-strategy = '24HMP-8Phys-4GSR-Spike_HPF'
+task = 'pvt'
+strategy = '24HMP-8Phys-Spike_HPF'
 
 
 file_pattern = f'*task-{task}_space-MNI152NLin6Asym_res-2_desc-preproc_bold.nii'
