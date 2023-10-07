@@ -3,7 +3,7 @@
 author: trianaa1
 '''
 
-import glob, os
+import glob, os, re
 import pandas as pd
 import numpy as np
 from scipy.io import savemat, loadmat
@@ -431,7 +431,8 @@ def make_first_level(file, path, task, design_matrix):
         return one_twoback
 
 def lss_transformer(df, row_number):
-    """Label one trial for one LSS model.
+    """Label one trial for one LSS model. As taken from nilearn
+    https://nilearn.github.io/dev/auto_examples/07_advanced/plot_beta_series.html#sphx-glr-auto-examples-07-advanced-plot-beta-series-py
 
     Parameters
     ----------
@@ -468,3 +469,34 @@ def lss_transformer(df, row_number):
     trial_name = f"{trial_condition}__{trial_number:03d}"
     df.loc[row_number, "trial_type"] = trial_name
     return df, trial_name
+
+def get_confounds(file, task, strategy):    
+    subject = file.split('/')[-3]
+    match = re.search(r'(/m/cs/scratch/networks-pm/pm_preprocessed/sub-\w+/func/)', file)
+    path = match.group(1)
+    
+    confounds = pd.read_csv(f'{path}/{subject}_task-{task}_desc-confounds_timeseries.tsv', sep='\t')
+    hr_rr = loadmat(f'{path}/{subject}_task-{task}_device-biopac_downsampledcut.mat')
+    hr_rr = hr_rr['downsampled_cut'].T
+    confounds[['heart_rate', 'respiration_rate']] = hr_rr
+        
+    hmp = ['trans_x','trans_y','trans_z','rot_x','rot_y','rot_z','trans_x_derivative1','trans_y_derivative1',
+               'trans_z_derivative1','trans_x_power2','trans_y_power2','trans_z_power2','trans_x_derivative1_power2',
+               'trans_y_derivative1_power2','trans_z_derivative1_power2','rot_x_derivative1','rot_y_derivative1',
+               'rot_z_derivative1','rot_x_power2','rot_y_power2','rot_z_power2','rot_x_derivative1_power2',
+               'rot_y_derivative1_power2','rot_z_derivative1_power2']
+    phys = ['csf','csf_derivative1','csf_power2','csf_derivative1_power2','white_matter','white_matter_derivative1',
+                'white_matter_power2','white_matter_derivative1_power2','heart_rate', 'respiration_rate']
+    gs = ['global_signal','global_signal_derivative1','global_signal_derivative1_power2','global_signal_power2']
+    motion = [s for s in list(confounds.columns) if "motion_outlier" in s]
+        
+    if strategy=='24HMP-8Phys-Spike_HPF':
+        confound_names = hmp+phys+motion
+    elif strategy=='24HMP-8Phys-4GSR-Spike_HPF':
+        confound_names = hmp+phys+gs+motion
+    else:
+        raise ValueError('Strategy not found!')
+        
+    confounds = confounds[confound_names]
+    confounds.fillna(0, inplace=True)
+    return confounds
