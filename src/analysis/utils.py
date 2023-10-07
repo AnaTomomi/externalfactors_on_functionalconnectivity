@@ -500,3 +500,38 @@ def get_confounds(file, task, strategy):
     confounds = confounds[confound_names]
     confounds.fillna(0, inplace=True)
     return confounds
+
+def compute_averagedbetas(conn_path, contrast, task, strategy, group_atlas):
+    ''' computes the averaged-ROI timeseries based on a selected atlas. The 
+    computations are done for all subjects in a folder.
+    
+    Parameters
+    ----------
+    conn_path: folder path to where the beta series are and where the ROIs will be stored
+    contrast: 
+    strategy: denoised strategy
+    group_atlas: file path to the group mask multiplied by the selected atlas.
+                 It should be a nii file
+    
+    Returns
+    -------
+    roi_ts_file: string with the path to the file containing the averaged-ROI 
+                 time series for all subjects
+    '''
+    
+    files = sorted(glob.glob(conn_path + f'/**/*{task}_*{strategy}*-{contrast}.nii', recursive=True))
+    atlas_name = os.path.basename(group_atlas).split('_')[-1].split('.nii')[0]
+    roi_ts_file = f'{conn_path}/{strategy}/averaged_roits_{contrast}_{strategy}_{atlas_name}.mat'
+    
+    masker = NiftiLabelsMasker(labels_img=group_atlas, standardize=True)
+    
+    if not os.path.exists(roi_ts_file):
+        all_ts = []
+        for file in files:
+            head, tail = os.path.split(file)
+            print(f'Creating node time series for {file}')
+            time_series = masker.fit_transform(file)
+            all_ts.append(time_series)
+        rs_ts = list2mat(all_ts)
+        savemat(roi_ts_file, {'rs_ts':rs_ts})
+    return roi_ts_file
