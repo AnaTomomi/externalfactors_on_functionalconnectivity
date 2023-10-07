@@ -1,7 +1,7 @@
 #!/bin/bash
-#SBATCH --time=08:00:00
+#SBATCH --time=06:00:00
 #SBATCH --mem=32G
-#SBATCH --array=121-145
+#SBATCH --array=61-120
 #SBATCH --output=/m/cs/scratch/networks-pm/jobs/beta-%j.out
 #SBATCH --cpus-per-task=8
 

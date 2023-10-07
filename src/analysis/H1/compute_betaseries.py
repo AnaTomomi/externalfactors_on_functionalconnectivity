@@ -35,6 +35,12 @@ events = pd.read_csv(f'{path}/{subject}/func/{subject}_task-{task}_events.tsv', 
 if task == 'pvt':
     events.rename(columns={"response_time":"modulation"},inplace=True)
     events = events[['onset','trial_type','duration','modulation']]
+    #The contrast for the PVT is "OK" + "lapse" as we have RT for both events. 
+    #Therefore, to compute the beta series, we need all events in ORDER so that the
+    #when we compute the correlations, the time series of evetns are in order. 
+    #Otherwise, we would have correlations of 1 or 2 betas for lapses. 
+    #Consequently, the lapse trial_type changes for "OK"
+    events.loc[events['trial_type'] == 'lapse', 'trial_type'] = 'OK'
     events.fillna(0.01, inplace=True)
 else:
     events = events[['onset','trial_type','duration']]
@@ -49,7 +55,7 @@ lss_beta_maps = {cond: [] for cond in events["trial_type"].unique()}
 
 for i_trial in range(events.shape[0]):
     type_event = events.loc[i_trial].at['trial_type']
-    if (type_event=='oneback' or type_event=='twoback' or type_event=='OK' or type_event=='lapse'):  
+    if (type_event=='oneback' or type_event=='twoback' or type_event=='OK'):  
         lss_events, trial_condition = lss_transformer(events, i_trial)
 
         # Compute and collect beta maps
