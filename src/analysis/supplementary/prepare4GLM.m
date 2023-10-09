@@ -11,11 +11,15 @@ close all
 clc
 
 path = '/m/cs/scratch/networks-pm/effects_externalfactors_on_functionalconnectivity/data';
+first_level = '/m/cs/scratch/networks-pm/effects_externalfactors_on_functionalconnectivity/results/supplementary';
+mask_path = '/m/cs/scratch/networks-pm/effects_externalfactors_on_functionalconnectivity/data/mri/conn_matrix';
 savepath = '/m/cs/scratch/networks-pm/effects_externalfactors_on_functionalconnectivity/data/mri/glm';
-task = 'pvt';
+task = 'nback';
+strategy = '24HMP-8Phys-Spike_HPF';
 
 %read the data
 variables = xlsread(sprintf('%s/behavioral/sub-01_day-lag1_task_pvt.xlsx', path));
+names = {'sleep_duration', 'awake_time', 'restless_sleep', 'sleep_efficiency', 'sleep_latency', 'steps', 'inactive_time'};
 meanFD = readmatrix(sprintf('%s/mri/sub-01_day-all_device-mri_meas-meanfd.csv', path));
 intercept = ones(size(variables,1),1);
 
@@ -26,34 +30,17 @@ elseif strcmp(task,'nback')
     meanFD = meanFD(:,5);
 end
 
-designmatrix = [variables, meanFD];
-designmatrix = designmatrix-mean(designmatrix); %demean the data according to (1)
-designmatrix = [intercept, designmatrix];
-save(sprintf('%s/design.mat',savepath), 'designmatrix', '-ASCII','-append');
-
-contrast = zeros(1,size(designmatrix,2));
-sleep_dur = contrast; awake = contrast; restless = contrast; efficiency = contrast; latency = contrast; 
-sleep_dur(1,2) = 1;
-awake(1,3) = 1;
-restless(1,4) = 1;
-efficiency(1,5) = 1;
-latency(1,6) = 1;
-
-%Save the files
-save(sprintf('%s/sleep_duration.con',savepath), 'sleep_dur', '-ASCII','-append');
-save(sprintf('%s/awake_time.con',savepath), 'awake', '-ASCII','-append');
-save(sprintf('%s/restless_sleep.con',savepath), 'restless', '-ASCII','-append');
-save(sprintf('%s/sleep_efficiency.con',savepath), 'efficiency', '-ASCII','-append');
-save(sprintf('%s/sleep_latency.con',savepath), 'latency', '-ASCII','-append');
-
-if strcmp(task,'nback')
-    steps = contrast; inactive = contrast; 
-    steps(1,7) = 1;
-    inactive(1,8) = 1;
-
-    save(sprintf('%s/steps.con',savepath), 'steps', '-ASCII','-append');
-    save(sprintf('%s/inactive_time.con',savepath), 'inactive', '-ASCII','-append');
+for i=1:size(variables,2)
+    designmatrix = [intercept, variables(:,i), meanFD];
+    design_matrix_file = sprintf('%s/%s_%s_design.txt',savepath, task, names{i});
+    design_matrix_fslfile = sprintf('%s/%s_%s_design.mat',savepath, task, names{i});
+    save(design_matrix_file, 'designmatrix', '-ASCII','-append');
 end
 
-contrast(1,2:(size(contrast,2)-1))=1;
-save(sprintf('%s/all_vars.con',savepath), 'contrast', '-ASCII','-append');
+%BEWARE: After running this code, someone needs to manually open the files,
+%paste them in a text editor and re-save them as txt. Sorry, no way around
+%it :(
+
+
+
+
