@@ -1,0 +1,17 @@
+#!/bin/bash
+
+cd /m/cs/scratch/networks-pm/effects_externalfactors_on_functionalconnectivity/data/mri/glm
+
+Text2Vest contrast.txt contrast.con
+Text2Vest nback_awake_time_design.txt nback_awake-time_design.mat
+Text2Vest nback_inactive_time_design.txt nback_inactive-time_design.mat
+Text2Vest nback_restless_sleep_design.txt nback_restless-sleep_design.mat
+Text2Vest nback_sleep_duration_design.txt nback_sleep-duration_design.mat
+Text2Vest nback_sleep_efficiency_design.txt nback_sleep-efficiency_design.mat
+Text2Vest nback_sleep_latency_design.txt nback_sleep-latency_design.mat
+Text2Vest nback_steps_design.txt nback_steps_design.mat
+Text2Vest pvt_awake_time_design.txt pvt_awake-time_design.mat
+Text2Vest pvt_restless_sleep_design.txt pvt_restless-sleep_design.mat
+Text2Vest pvt_sleep_duration_design.txt pvt_sleep-duration_design.mat
+Text2Vest pvt_sleep_efficiency_design.txt pvt_sleep-efficiency_design.mat
+Text2Vest pvt_sleep_latency_design.txt pvt_sleep-latency_design.mat
