@@ -8,6 +8,8 @@ import pandas as pd
 import numpy as np
 from scipy.io import savemat, loadmat
 from scipy.spatial.distance import euclidean
+from scipy.stats import gaussian_kde
+from scipy.interpolate import interp1d
 
 import nibabel as nib
 from nilearn.maskers import NiftiLabelsMasker
@@ -286,19 +288,17 @@ def get_behav_data_tasks(behav_path, lag):
     
     return filtered_behav
 
-def get_behav_data_15days(behav_path, days=15):
-    ''' selects the behavioral data for specific days before the scanner (lag). 
-    In this case, behavioral scores that are relaated to H1, H2, and H3 in the 
+def get_behav_data(behav_path):
+    ''' selects the behavioral data that are relaated to H1, H2, and H3 in the 
     paper are selected. 
     
     Parameters
     ----------
     behav_path: folder path to where the behavioral data files are
-    lag: number of days before the scanner to select
     
     Returns
     -------
-    filtered_behav: DataFrame with the selected information according to the scanner days
+    behav: DataFrame with the selected information according to the scanner days
     '''
     sleep = pd.read_csv(os.path.join(behav_path, 'sub-01_day-all_device-oura.csv'))
     sleep = sleep[['date','total_sleep_duration', 'awake_time','restless_sleep',
@@ -329,6 +329,28 @@ def get_behav_data_15days(behav_path, days=15):
     
     #fill in the nans with the mean 
     behav.fillna(round(behav.mean(numeric_only=True)), inplace=True)
+    
+    return behav
+
+def get_behav_data_15days(behav_path, days=15, behav=None):
+    ''' selects the behavioral data for specific days before the scanner (lag). 
+    In this case, behavioral scores that are relaated to H1, H2, and H3 in the 
+    paper are selected. 
+    
+    Parameters
+    ----------
+    behav_path: folder path to where the behavioral data files are
+    behav: behavioral data in dataframe
+    lag: number of days before the scanner to select
+    
+    Returns
+    -------
+    filtered_behav: DataFrame with the selected information according to the scanner days
+    '''
+    if behav is None:
+        behav = get_behav_data(behav_path)
+    else:
+        behav = behav.copy()
 
     #select the days
     scan_days = pd.read_csv(os.path.join(f'{behav_path.rsplit("/", 2)[0]}/data/mri','sub-01_day-all_device-mri.csv'), header=0)
@@ -337,7 +359,12 @@ def get_behav_data_15days(behav_path, days=15):
     
     # Create lag variables
     columns = list(behav.columns)
-    for lag in range(days):  # up to 2 lags (you can adjust this as needed)
+    #Shift the sleep one spot because the "previous" night is timestamped with "today's" 
+    #timestamp. 
+    sleep_cols = ['total_sleep_duration','awake_time','restless_sleep','sleep_efficiency',
+                  'sleep_latency']
+    behav[sleep_cols] = behav[sleep_cols].shift(-1).fillna(behav[sleep_cols].mean())
+    for lag in range(days):  
         for col in columns:
             behav[f"{col}{lag}"] = behav[col].shift(lag)
 
@@ -535,3 +562,46 @@ def compute_averagedbetas(conn_path, contrast, task, strategy, group_atlas):
         rs_ts = list2mat(all_ts)
         savemat(roi_ts_file, {'rs_ts':rs_ts})
     return roi_ts_file
+
+def get_pval(tvals, data):
+    ''' computes the p-value for non-parametric permutations
+    
+    Parameters
+    ----------
+    tvals: numpy.array of correlation values. The size should be (i,j), where i
+    is the variable and j the lag
+    data: numpy.array of permutation correlation values. This data is generated 
+    based on surrogate data. The size should be (i,j), where i is the variable 
+    and j the lag.
+    
+    Returns
+    -------
+    pvals: p-val for each (i,j) where i is the variable and j the lag.
+    '''
+    NCDF = 200
+    pvals = np.zeros(tvals.shape)
+    
+    for i in range(data.shape[0]):
+        for j in range(data.shape[1]):
+            outiter = data[i, j, :] #variable i, lag j
+            tval = tvals[i, j]
+            
+            # Kernel Density Estimation and CDF computation
+            kde = gaussian_kde(outiter, bw_method='silverman')
+            xi = np.linspace(-1, 1, NCDF)
+            fi = np.array([kde.integrate_box_1d(-np.inf, x) for x in xi])
+            
+            # Interpolation
+            interp_fi = interp1d(xi, fi, bounds_error=False, fill_value=(0, 1))
+            pval_left = interp_fi(tval)
+            
+            # Two-tailed p-value computation
+            pval_right = 1 - pval_left
+            pval = min(pval_right, pval_left)
+            
+            # Storing the p-value
+            pvals[i, j] = pval
+    return pvals
+
+
+    
