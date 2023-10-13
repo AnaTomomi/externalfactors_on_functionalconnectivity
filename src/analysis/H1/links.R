@@ -1,0 +1,85 @@
+#Set the variables
+path = "/m/cs/scratch/networks-pm/effects_externalfactors_on_functionalconnectivity/data/mri/conn_matrix/pvt"
+beh_path = "/m/cs/scratch/networks-pm/effects_externalfactors_on_functionalconnectivity/data/"
+save_path = "/m/cs/scratch/networks-pm/effects_externalfactors_on_functionalconnectivity/results/H1"
+
+#Get the parameters that were passed on from the command line
+args <- commandArgs(trailingOnly = TRUE)
+if (length(args) < 2) {
+  stop("You must provide strategy and atlas_name as arguments")
+}
+strategy <- args[1]
+atlas_name <- args[2]
+
+#Check that the packages we need are installed
+pkg_list <- c("R.matlab", "xlsx", "lmPerm")
+
+# Function to check, install and load packages
+load_package <- function(pkg){
+  if (!requireNamespace(pkg, quietly = TRUE)) {
+    install.packages(pkg, repos = "https://cloud.r-project.org/")
+  }
+  library(pkg, character.only = TRUE)
+}
+sapply(pkg_list, load_package) # Apply the function to each package in the list
+
+# Set seed for reproducibility
+set.seed(0)
+
+# Number of subjs
+n_subjects <- 30
+
+# Set a floor value for the p-vals in case one is too small, in which case
+# R will save the value as 0 and can cause problems when performing the FDR correction
+# Thus. any value below the floor will be saved as the floor
+floor_value <- 2.2e-15
+
+# load the dependent variable
+links <- readMat(paste(path, strategy, paste0("reg-links_", strategy, "_", atlas_name, ".mat"), sep="/"))
+links <- links$links
+num_links <- ncol(links)
+
+#load the independent variables
+beh <- read.xlsx(paste(beh_path, "behavioral/sub-01_day-lag1_task_pvt.xlsx", sep="/"), sheetIndex = 1)
+
+# Combine into a data frame
+data <- data.frame(links, beh)
+
+# Loop through the first num_links columns, i.e. each node in the adjacency matrix
+result_df <- data.frame()
+for (i in 1:num_links) {
+  col_name <- colnames(data)[i] # Extract column name
+  formula_str <- paste0(col_name, " ~ total_sleep_duration + awake_time + restless_sleep") # Construct the formula dynamically
+  model <- lmp(as.formula(formula_str), data = data, perm="Prob", maxIter=10000, Ca=1e-09, center=FALSE)
+  model_summary <- summary(model)
+  
+  # Manual standardization for all coefficients including the intercept
+  predictors <- names(coef(model))  
+  standardized_betas <- numeric(length(predictors))
+  
+  for (j in 1:length(standardized_betas)) {
+    predictor <- predictors[j]
+    if (predictor == "(Intercept)") {
+      standardized_betas[j] <- coef(model)[predictor] - sum(coef(model)[-1] * colMeans(data[predictors[-1]]))
+    } else {
+      standardized_betas[j] <- coef(model)[predictor] * sd(data[[predictor]]) / sd(data[[col_name]])
+    }
+  }
+  
+  result_col <- data.frame(estimate = model_summary$coefficients[,"Estimate"],
+                           p_values = model_summary$coefficients[, "Pr(Prob)"], 
+                           r_squared = model_summary$r.squared, 
+                           adj_r_squared = model_summary$adj.r.squared,
+                           f_statistic = model_summary$fstatistic[1],
+                           f_p_value = pf(model_summary$fstatistic[1], model_summary$fstatistic[2], model_summary$fstatistic[3], lower.tail = FALSE),
+                           standardized_betas = standardized_betas,
+                           link = i)
+  result_df <- rbind(result_df, result_col)
+}
+
+if (0 %in% result_df$p_values) {
+  result_df$p_values[result_df$p_values < floor_value] <- floor_value
+}
+
+save_file = paste(save_path, paste0("reg-links_", strategy, "_", atlas_name, ".csv"), sep="/")
+write.csv(result_df, save_file, row.names = TRUE)
