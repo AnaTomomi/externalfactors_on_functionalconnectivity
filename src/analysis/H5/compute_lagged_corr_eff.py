@@ -15,7 +15,7 @@ from utils import get_behav_data_15days, get_pval
 path = '/m/cs/scratch/networks-pm/effects_externalfactors_on_functionalconnectivity/data'
 savepath = '/m/cs/scratch/networks-pm/effects_externalfactors_on_functionalconnectivity/results/H5'
 task = 'pvt'
-strategy = '24HMP-8Phys-Spike_HPF'
+strategy = '24HMP-8Phys-4GSR-Spike_HPF'
 atlas_name = 'seitzman-set1'
 lag_no = 16
 
