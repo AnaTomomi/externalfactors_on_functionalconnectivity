@@ -6,7 +6,7 @@ addpath(genpath('/m/cs/scratch/networks-pm/software/BCT'))
 
 path = '/m/cs/scratch/networks-pm/effects_externalfactors_on_functionalconnectivity/data/mri/conn_matrix/rs';
 strategy = '24HMP-8Phys-Spike_HPF';
-atlas_name = 'seitzman-set2';
+atlas_name = 'seitzman-set1';
 
 adj =  load(sprintf('%s/%s/reg-adj_%s_%s.mat', path, strategy, strategy, atlas_name));
 adj = adj.conn;
