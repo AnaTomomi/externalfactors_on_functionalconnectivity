@@ -1,15 +1,27 @@
-library(R.matlab)
-library(xlsx)
-library(car)
-library(zoo)
-library(lmPerm)
-
-#set the variables
+#Set the variables
 path = "/m/cs/scratch/networks-pm/effects_externalfactors_on_functionalconnectivity/data/mri/conn_matrix/rs"
 beh_path = "/m/cs/scratch/networks-pm/effects_externalfactors_on_functionalconnectivity/data/"
 save_path = "/m/cs/scratch/networks-pm/effects_externalfactors_on_functionalconnectivity/results/H3"
-strategy = "24HMP-8Phys-Spike_HPF"
-atlas_name = "seitzman-set1"
+
+#Get the parameters that were passed on from the command line
+args <- commandArgs(trailingOnly = TRUE)
+if (length(args) < 2) {
+  stop("You must provide strategy and atlas_name as arguments")
+}
+strategy <- args[1]
+atlas_name <- args[2]
+
+#Check that the packages we need are installed
+pkg_list <- c("R.matlab", "xlsx", "lmPerm")
+
+# Function to check, install and load packages
+load_package <- function(pkg){
+  if (!requireNamespace(pkg, quietly = TRUE)) {
+    install.packages(pkg, repos = "https://cloud.r-project.org/")
+  }
+  library(pkg, character.only = TRUE)
+}
+sapply(pkg_list, load_package) # Apply the function to each package in the list
 
 # Set seed for reproducibility
 set.seed(0)
@@ -40,7 +52,7 @@ names(data)[names(data) == "eye.resting"] <- "eye_resting"
 result_df <- data.frame()
 for (i in 1:num_links) {
   col_name <- colnames(data)[i] # Extract column name
-  formula_str <- paste0(col_name, " ~ total_sleep_duration + awake_time + restless_sleep + pa_mean + pa_std + na_mean + stress_mean + pain_mean + mean_respiratory_rate_brpm + min_respiratory_rate_brpm + max_respiratory_rate_brpm + median_respiratory_rate_brpm + mean_prv_rmssd_ms + min_prv_rmssd_ms + max_prv_rmssd_ms + eye_resting") # Construct the formula dynamically
+  formula_str <- paste0(col_name, " ~ total_sleep_duration + awake_time + restless_sleep + pa_mean + pa_std + na_mean + stress_mean + pain_mean + mean_respiratory_rate_brpm + min_respiratory_rate_brpm + max_respiratory_rate_brpm + mean_prv_rmssd_ms + min_prv_rmssd_ms + max_prv_rmssd_ms + std_prv_rmssd_ms + eye_resting") # Construct the formula dynamically
   model <- lmp(as.formula(formula_str), data = data, perm="Prob", maxIter=10000, Ca=1e-09, center=FALSE)
   model_summary <- summary(model)
   
