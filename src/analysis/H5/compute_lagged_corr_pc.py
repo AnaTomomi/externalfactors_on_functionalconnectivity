@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 import pickle
 from scipy.io import loadmat, savemat
+import concurrent.futures
 
 sys.path.append('/m/cs/scratch/networks-pm/effects_externalfactors_on_functionalconnectivity/src/analysis')
 from utils import get_behav_data_15days, get_pval
@@ -36,30 +37,31 @@ with open(f'{path}/behavioral/surrogate_behav_data.pkl', 'rb') as file:
     
 #compute the real correlation for each node
 columns = list(behav.columns)
-for node in range(0,len(pc)):
-    real_corr_values = np.zeros((len(variables),lag_no,len(pc)))
-    for lag in range(0,lag_no):
-        #Select only the columns for the lag
-        sub_behav = behav[[col for col in columns if col.endswith(f"{lag}") and not col.endswith(f"1{lag}")]]
+real_corr_values = np.zeros((len(variables),lag_no,len(pc)))  # move outside of loop
+for lag in range(lag_no):
+    sub_behav = behav[[col for col in columns if col.endswith(f"{lag}") and not col.endswith(f"1{lag}")]]
+    for node in range(len(pc)):
+        corrs = sub_behav.corrwith(pd.Series(pc[:,node],name=str(node)), method='spearman')
+        real_corr_values[:,lag,node] = corrs.values
 
-        #Compute the correlations
-        corrs = sub_behav.corrwith(pc[:,node], method='spearman')
-        real_corr_values[:,lag,node] = corrs.values #although lag0 is not informative yet
-
-#Compute the correlations for the surrogate data
-fake_corr_list = []
-for node in range(0,len(pc)):
-    fake_corr_values = np.zeros((len(variables),lag_no,len(surrogate_data)))
+#compute fake correlations
+def compute_fake_corr(node):
+    fake_corr_values = np.zeros((len(variables), lag_no, len(surrogate_data)))
+    sub_lagged_dfs = [[col for col in columns if col.endswith(f"{lag}") and not col.endswith(f"1{lag}")] for lag in range(lag_no)]
+    
     for i, df in enumerate(surrogate_data):
         print(i)
         lagged_df = df[selected_cols]
-        for lag in range(0,lag_no):
-            #Select only the columns for the lag
-            sub_lagged_df = lagged_df[[col for col in columns if col.endswith(f"{lag}") and not col.endswith(f"1{lag}")]]
-            #Compute the correlations
-            corrs = sub_lagged_df.corrwith(pc[:,node], method='spearman')
-            fake_corr_values[:,lag,i] = corrs.values
-    fake_corr_list.append(fake_corr_values)
+        for lag in range(lag_no):
+            sub_lagged_df = lagged_df[sub_lagged_dfs[lag]]
+            corrs = sub_lagged_df.corrwith(pd.Series(pc[:, node], name=str(node)), method='spearman')
+            fake_corr_values[:, lag, i] = corrs.values
+    
+    return fake_corr_values
+
+with concurrent.futures.ProcessPoolExecutor() as executor:
+    fake_corr_list = list(executor.map(compute_fake_corr, range(2)))
+
 
 pvals_list = []
 for node in range(0,len(fake_corr_list)):
