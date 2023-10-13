@@ -4,7 +4,7 @@ clc
 
 addpath(genpath('/m/cs/scratch/networks-pm/software/BCT'))
 
-path = '/m/cs/scratch/networks-pm/effects_externalfactors_on_functionalconnectivity/data/mri/conn_matrix/nback';
+path = '/m/cs/scratch/networks-pm/effects_externalfactors_on_functionalconnectivity/data/mri/conn_matrix/pvt';
 strategy = '24HMP-8Phys-4GSR-Spike_HPF';
 atlas_name = 'seitzman-set1';
 
