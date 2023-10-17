@@ -1,3 +1,13 @@
+"""
+This script computes the beta series for the specified denoise strategy, task,
+and session. 
+
+Inputs: session, task, denoise strategy, in that order.  
+
+Outputs: nii file with the beta computations
+
+@author: trianaa1
+"""
 import sys
 import pandas as pd
 import nibabel as nib
@@ -15,7 +25,7 @@ strategy = sys.argv[3]#'24HMP-8Phys-Spike_HPF'
 subject = sys.argv[1]#'sub-01'
 
 
-#Defint the file and mask
+#Define the file and mask
 file = f'{path}/{subject}/func/{subject}_task-{task}_space-MNI152NLin6Asym_res-2_desc-preproc_bold.nii'
 nii = nib.load(file)
 if subject == 'sub-25' and task=='nback':
@@ -46,13 +56,17 @@ else:
     events = events[['onset','trial_type','duration']]
 print('events loaded')
 
-#Load the confounds
+#Load the confounds. Please note that since the beta series are computed from a 
+#GLM model, we do not employ the denoised files, but rather load the chosen
+#confounds and input them in the beta series computation as confounds.
 confounds = get_confounds(file, task, strategy)
 print('confounds loaded')
 
 # Loop through the trials of interest and transform the DataFrame for LSS
 lss_beta_maps = {cond: [] for cond in events["trial_type"].unique()}
 
+#In the beta series, we need to compute the betas for each individual trial,
+#thus the loop
 for i_trial in range(events.shape[0]):
     type_event = events.loc[i_trial].at['trial_type']
     if (type_event=='oneback' or type_event=='twoback' or type_event=='OK'):  
