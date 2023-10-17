@@ -1,9 +1,9 @@
 #!/bin/bash
 #SBATCH --time=4-00:00:00
-#SBATCH --mem=20G
+#SBATCH --mem=100G
 #SBATCH --array=1-4
 #SBATCH --output=/m/cs/scratch/networks-pm/jobs/H7-%j.out
-#SBATCH --cpus-per-task=8
+#SBATCH --cpus-per-task=16
 
 n=$SLURM_ARRAY_TASK_ID
 variants=`sed "${n}q;d" options.txt`
