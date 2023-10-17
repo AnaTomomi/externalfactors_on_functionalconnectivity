@@ -11,6 +11,8 @@ path ="/m/cs/archive/networks-pm/cognitive"
 days = pd.read_csv(f'/m/cs/project/networks-pm/mri/fast_prepro_bids/participants.tsv',sep='\t')
 tr = 0.594
 
+#create a dictionary that, for each task, has the total number of volumes and 
+#the code  (i.e. keyword) used to mark the beginning and end of the task.
 tasks = {'pvt':[1116,'Instruction screen present','End screen present'], 
          'resting':[1102, 'sync', 'last'], 
          'movie':[1059,'sync','video1','last'], 
@@ -32,10 +34,15 @@ for file in filtered_files:
     task = re.search('task-+([\w]+)\.log', file).group(1)
     sub = file[0:6]
     
-    #Take into account that we have discarded the first 5 volumes
+    #Take into account that we have discarded the first 5 volumes (if you are 
+    #lost), check the step 7 from the preprocess_mri_data.md file), but in short,
+    #these 5 volumes were discarded before fMRIprep, so the preprocessed images
+    #already do not include them. 
     df['Time'] = pd.to_numeric(df['Time'], errors='coerce')
-    df['Time'] = df['Time']/10
-    mri_pulse_time = df[df['Code'] == 'MRI pulse received']['Time'].iloc[0]
+    df['Time'] = df['Time']/10 #the presentation log is in 10*ms 
+    #this is when the scanner started collecting data
+    mri_pulse_time = df[df['Code'] == 'MRI pulse received']['Time'].iloc[0] 
+    #the 0 point is after the 5 vols, since we cut them, i.e. 5 vols after the MRI pulse
     df['Time'] = round(df['Time']-mri_pulse_time)-(5*(tr*1000))
     
     # Filtering the 5 volumes cut at the beginning.

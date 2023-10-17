@@ -19,11 +19,32 @@ savepath = "/m/cs/scratch/networks-pm/effects_externalfactors_on_functionalconne
 ###############################################################################
 
 def compute_phq_gad(df):
+    ''' computes the GAD scores 
+    
+    Parameters
+    ----------
+    df: pandas dataframe
+    
+    Returns
+    -------
+    data: pandas series
+    '''
     df.drop(columns=['id','question'],inplace=True)
     data = df.sum(skipna=False)
     return data
 
 def remap(row):
+    ''' Maps the answers to a new index. This function is used for remapping the 
+    answer when it needs to be reversed. 
+    
+    Parameters
+    ----------
+    row: row of a dataframe
+    
+    Returns
+    -------
+    row: row of a dataframe
+    '''
     mapping = {0:4, 1:3, 2:2, 3:1, 4:0}
     if row.name in [4,5,7,8]:
         return row.map(mapping)
@@ -31,6 +52,16 @@ def remap(row):
         return row
 
 def compute_pss(df):
+    ''' computes the PSS scores 
+    
+    Parameters
+    ----------
+    df: pandas dataframe
+    
+    Returns
+    -------
+    data: pandas series
+    '''
     df.set_index("id",inplace=True)
     df.drop(columns=["question"], inplace=True)
     df2 = df.apply(remap, axis=1)
@@ -50,9 +81,20 @@ def compute_average(df, rows):
     return average
 
 def compute_big_five(df):
+    ''' computes the Big 5 scores 
+    
+    Parameters
+    ----------
+    df: pandas dataframe
+    
+    Returns
+    -------
+    result: pandas series
+    '''
     df.set_index("id",inplace=True)
     df.drop(columns=['question', 'Unnamed: 3', 'Unnamed: 4'], inplace=True)
     
+    #The constructs according to the Big5 instructions
     extraversion_avg = compute_average(df, ['1', '6R', '11', '16', '21R', '26', '31R', '36'])
     agreeableness_avg = compute_average(df, ['2R', '7', '12R', '17', '22', '27R', '32', '37R', '42'])
     conscientiousness_avg = compute_average(df, ['3', '8R', '13', '18R', '23R', '28', '33', '38', '43R'])
@@ -67,6 +109,16 @@ def compute_big_five(df):
     return result
 
 def compute_psqi(df):
+    ''' computes the PSQI scores 
+    
+    Parameters
+    ----------
+    df: pandas dataframe
+    
+    Returns
+    -------
+    result: pandas series
+    '''
     df['id'] = df["id"].astype(str)
     def calculate_C2(row):
         if row <= 15:

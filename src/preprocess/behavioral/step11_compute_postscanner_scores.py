@@ -33,6 +33,7 @@ df.columns = df.columns.map({
 #drop the first column and set to numeric what can be numeric
 df.drop(["id"], inplace=True)
 df.index = pd.to_datetime(df.index, format='%d.%m.%Y')
+#map the sessions as subjects
 df.insert(0, "subject", ["sub-" + str(i).zfill(2) for i in range(1, len(df) + 1)])
 for col in ['pvt_engagement', 'resting_engagement', 'movie_engagement', 'nback_engagement', 'discomfort', 'drowsiness']:
     df[col] = pd.to_numeric(df[col], errors='coerce')

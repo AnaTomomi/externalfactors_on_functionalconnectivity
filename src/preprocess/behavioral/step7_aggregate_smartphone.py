@@ -24,7 +24,7 @@ import niimpy.preprocessing.battery as bat
 import niimpy.preprocessing.location as l
 
 
-file = sys.argv[1]
+path = sys.argv[1]
 savepath = sys.argv[2]
 
 def get_location_resampled(df, rule):
@@ -61,7 +61,8 @@ files = [f for f in files if 'ESM' not in f]
 
 rule = "1D" #aggregate data per day
 
-#Let's define the features we want to preprocess
+#Let's define the features we want to preprocess. This is based on the documentation
+# of the niimpy module
 call_features = {com.call_duration_total:{"resample_args":{"rule":rule}},
                      com.call_duration_mean:{"resample_args":{"rule":rule}},
                      com.call_duration_median:{"resample_args":{"rule":rule}},
