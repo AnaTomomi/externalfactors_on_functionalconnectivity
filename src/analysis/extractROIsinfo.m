@@ -1,8 +1,16 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% This script generates the information excel file for each parcellation  %
+% set based on Seitzman (2020).                                           %
+%                                                                         %
+% Author: ana.trianahoyos@aalto.fi                                        %
+% Created: 19.10.2022                                                     %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 clear all
 close all
 clc
 
-path = '/m/cs/scratch/networks-pm/effects_externalfactors_on_functionalconnectivity/data/mri/conn_matrix/pvt';
+path = '/m/cs/scratch/networks-pm/effects_externalfactors_on_functionalconnectivity/data/mri/conn_matrix/rs';
 atlas_name = 'seitzman-set1';
 atlas = niftiread(sprintf('%s/group_mask_%s.nii',path,atlas_name));
 
@@ -19,6 +27,7 @@ if strcmp(atlas_name, 'seitzman-set1')
     group_rois = rois_names(ismember(rois_names.roi, rois), :);
 else
     group_rois = rois_names(ismember(rois_names.gordon, rois), :);
+    group_rois = sortrows(group_rois, 'gordon');
 end
 
 writetable(group_rois, sprintf('%s/group_%s_info.xlsx',path,atlas_name))
