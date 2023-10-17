@@ -37,6 +37,12 @@ The third hypothesis states "fluctuations in sleep, autonomic nervous system act
 5. Compute the regression analysis by using the script **step-4_compute_regressions.sh**. This will automatically compute the values for global efficiency, participation coefficient, and links. This script uses the file *options.txt* as a support for inputting the denoise strategy and atlas name. It also uses the scripts *eff.R*, *pc.R*, and *links.R*.
 6. Correct for multiple comparisons using the script **step-5_FDRcorr.m** 
 
+# H4: Movie
+The fourth hypothesis states " Increased similarity in the sleep, autonomic nervous system activity, or mood patterns between days is reflected as an increase in inter-day similarity within the frontoparietal, default mode, and salience networks during movie-watching tasks"
+0. Compute the behavioral data for the movie data. Use the function *get_behav_data_movie* in the **utils.py** general script to do so. Use it with lag=1.
+1. Compute the averaged-ROI timeseries for the movie data by running the script **step-1_compute_ISCmat-py**. Open the script to change the strategies and atlas.
+2. Compute the Mantel test by running the script **step-2_computeISC.sh**. The *variants.txt* and *computeISC.py* scripts are needed. 
+3. Summarize the results by running the script **step-3_generate_resultstable.py**
 
 # H5: PVT
 The fifth hypothesis states "Sleep patterns experienced over the past fifteen days are correlated with functional connectivity in the fronto-parietal, default mode, somatomotor, and cingulo-opercular networks during sustained attention tasks".
