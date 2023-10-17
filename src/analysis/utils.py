@@ -39,6 +39,20 @@ def list2mat(a):
 
 
 def compute_groupmasks(conn_path, fmriprep_path, task, vol_size, atlas_name):
+    ''' computes the group mask according to the individual masks.
+    
+    Parameters
+    ----------
+    conn_path: folder path to where the computations will be stored
+    fmriprep_path: folder path to where the output from fmriprep is stored
+    task: 'pvt', 'resting', 'nback', or 'movie'
+    vol_size: size of the voxels in the nii file. Usually [91,109,91] for 2mm
+    atlas_name: name of the atlas to be used
+    
+    Returns
+    -------
+    masked_atlas: string with the path to the file containing the group masked atlas
+    '''
     files = sorted(glob.glob(fmriprep_path + f'/**/func/*{task}_*mask.nii', recursive=True))
     
     group_mask_mult_name = f'{conn_path}/group_mask_mult.nii'
@@ -332,7 +346,7 @@ def get_behav_data(behav_path):
     
     return behav
 
-def get_behav_data_15days(behav_path, days=15, behav=None):
+def get_behav_data_15days(behav_path, days=16, behav=None):
     ''' selects the behavioral data for specific days before the scanner (lag). 
     In this case, behavioral scores that are relaated to H1, H2, and H3 in the 
     paper are selected. 
@@ -548,7 +562,10 @@ def compute_averagedbetas(conn_path, contrast, task, strategy, group_atlas):
     
     files = sorted(glob.glob(conn_path + f'/**/*{task}_*{strategy}*-{contrast}.nii', recursive=True))
     atlas_name = os.path.basename(group_atlas).split('_')[-1].split('.nii')[0]
-    roi_ts_file = f'{conn_path}/{strategy}/averaged_roits_{contrast}_{strategy}_{atlas_name}.mat'
+    if task=='nback':
+        roi_ts_file = f'{conn_path}/{strategy}/averaged_roits_{contrast}_{strategy}_{atlas_name}.mat'
+    elif task=='pvt':
+        roi_ts_file = f'{conn_path}/{strategy}/averaged_roits_{strategy}_{atlas_name}.mat'
     
     masker = NiftiLabelsMasker(labels_img=group_atlas, standardize=True)
     
