@@ -13,4 +13,5 @@
 11. Cut the sequences again to match the volumes that were already cut in step 7 using the script **step6-3-3_HRcut.m**
 12. Un-gunzip all the files that fmriprep has created, so that matlab does not have a problem reading them. You can use the command **gunzip *.nii.gz**
 12. Denoise the files using **step7_denoise.sh SUBJECT TASK STRATEGY**, where SUBJECT has to be in the "sub-##" format, TASK refers to the fMRI task, and STRATEGY is one of the denoise strategies listed in the matlab file denoise.m. Strategies for this case are: 24HMP-8Phys-4GSR-Spike and 24HMP-8Phys-Spike
-13. OPTIONAL: If you want to check the preprocessing, use the script **plot_preprocess.py** to do so.
+12. OPTIONAL: If you want to check the preprocessing, use the script **plot_preprocess.py** to do so.
+13. Compute the mean FD for the specific sections of the task. To do so, first compute the MRI cuts by using the script **step8-1_compute_mricuts.py**. Then, compute the mean FD between the cuts by running the script **step8-2_compute_meanFD.py**. 

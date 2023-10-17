@@ -7,9 +7,9 @@ Preprocessing these data implies computing the scores for the PVT and nback task
 
 ## Preprocessing steps
 1. Download the data from the presentation folder and paste the logs in the right path
-2. Run the script ./src/preprocess/cognitive/step0_organize_logs.sh
-3. run the script ./src/preprocess/cognitive/step1_compute-pvt-scores.py PATH SAVEFILE. The script takes two positional arguments: the parent path where all cognitive data is stored and the full filename (path+name) where the preprocessed data will be stored
-4. run the script ./src/preprocess/cognitive/step2_compute-nback-scores.py PATH SAVEFILE. The script takes two positional arguments: the parent path where all cognitive data is stored and the full filename (path+name) where the preprocessed data will be stored
+2. Run the script ./src/preprocess/cognitive/**step0_organize_logs.sh**
+3. Run the script ./src/preprocess/cognitive/**step1_compute-pvt-scores.py** PATH SAVEFILE. The script takes two positional arguments: the parent path where all cognitive data is stored and the full filename (path+name) where the preprocessed data will be stored
+4. Run the script ./src/preprocess/cognitive/**step2_compute-nback-scores.py** PATH SAVEFILE. The script takes two positional arguments: the parent path where all cognitive data is stored and the full filename (path+name) where the preprocessed data will be stored
 
 # Quality check
 The cognitive quality check is the percentage of data loss during the whole experiment. 
