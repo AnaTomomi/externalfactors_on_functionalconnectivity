@@ -14,10 +14,11 @@ import pandas as pd
 import numpy as np
 
 import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
+import matplotlib
 import seaborn as sns
 
 import matplotlib.dates as mdates
-import numpy as np
 
 
 path = sys.argv[1]
@@ -106,8 +107,15 @@ df.index = pd.to_datetime(df.index, dayfirst=True)
 df = df.loc[begin:end]
 
 #plot the quality
+cmap = plt.cm.YlGnBu
+colors = np.linspace(0, 1, 10)
+ten_colors = [cmap(color) for color in colors]
+cmap_10 = mcolors.ListedColormap(ten_colors)
+
 fig, ax = plt.subplots(figsize=(15,10))
-sns.heatmap(df.T, cmap='YlGnBu', ax=ax, linewidths=0, linecolor=None)
+font = {'family' : 'Arial','size': 14}
+matplotlib.rc('font', **font)
+sns.heatmap(df.T, cmap=cmap_10, ax=ax, linewidths=0, linecolor=None)
 
 sundays = df[df.index.weekday == 6].index
 for sunday in sundays:
