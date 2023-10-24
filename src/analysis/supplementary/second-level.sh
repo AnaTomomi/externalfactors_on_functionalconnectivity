@@ -12,7 +12,7 @@ IFS=' ' read -a array <<< "$variants"
 cd /m/cs/scratch/networks-pm/effects_externalfactors_on_functionalconnectivity
 
 module load fsl
-source $FSLDIR/etc/fslconf/fsl.sh]
+source $FSLDIR/etc/fslconf/fsl.sh
 
 echo "For the array $n"
 echo "task=${array[0]}"

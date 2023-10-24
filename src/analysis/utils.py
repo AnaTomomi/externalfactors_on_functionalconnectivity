@@ -6,6 +6,7 @@ author: trianaa1
 import glob, os, re
 import pandas as pd
 import numpy as np
+import math
 from scipy.io import savemat, loadmat
 from scipy.spatial.distance import euclidean
 from scipy.stats import gaussian_kde
@@ -373,14 +374,18 @@ def get_behav_data_15days(behav_path, days=16, behav=None):
     
     # Create lag variables
     columns = list(behav.columns)
-    #Shift the sleep one spot because the "previous" night is timestamped with "today's" 
-    #timestamp. 
-    sleep_cols = ['total_sleep_duration','awake_time','restless_sleep','sleep_efficiency',
-                  'sleep_latency']
+    
+    # Adjusting the sleep columns first
+    sleep_cols = ['total_sleep_duration','awake_time','restless_sleep','sleep_efficiency', 'sleep_latency']
     behav[sleep_cols] = behav[sleep_cols].shift(-1).fillna(behav[sleep_cols].mean())
+
+    new_columns = {}
     for lag in range(days):  
         for col in columns:
-            behav[f"{col}{lag}"] = behav[col].shift(lag)
+            new_columns[f"{col}{lag}"] = behav[col].shift(lag)
+
+    # Adding the new columns to the DataFrame at once
+    behav = pd.concat([behav, pd.DataFrame(new_columns)], axis=1)
 
     # Merge dataframes
     merged_df = pd.merge(scan_days, behav, left_on="date", right_on="date", how="left")
@@ -619,6 +624,3 @@ def get_pval(tvals, data):
             # Storing the p-value
             pvals[i, j] = pval
     return pvals
-
-
-    
