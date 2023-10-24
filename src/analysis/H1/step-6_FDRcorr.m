@@ -10,11 +10,14 @@ clear all
 close all
 clc
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Change this only!
 path = '/m/cs/scratch/networks-pm/effects_externalfactors_on_functionalconnectivity/results/H1';
-strategy = '24HMP-8Phys-4GSR-Spike_HPF';
-atlas_name = 'seitzman-set2';
+strategy = '24HMP-8Phys-Spike_HPF';
+atlas_name = 'seitzman-set1';
 atlas_path = '/m/cs/scratch/networks-pm/effects_externalfactors_on_functionalconnectivity/data/mri/conn_matrix/pvt';
 to_correct = 'reg-links'; %'reg-links' or 'parti-coeff'
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if strcmp(atlas_name,'seitzman-set1')
     matrixSize = 181;
@@ -32,7 +35,6 @@ totest = unstack(data, 'p_values','Var1'); % Pivot the table
 
 %Start the multiple comparison correction
 data_BH = totest;
-data_fdr = totest;
 colNamesToIterate = totest.Properties.VariableNames(2:end);
 if strcmp(to_correct,'parti-coeff')
     for colName = colNamesToIterate
@@ -41,18 +43,10 @@ if strcmp(to_correct,'parti-coeff')
             fprintf('%s pval over 1', colName{1})
         end
         qvals_bh =  mafdr(pvals, 'BHFDR', 'True');
-        if all(pvals(:))~=pvals(end)
-            qvals = mafdr(pvals);
-        else
-            qvals = qvals_bh;
-        end
-    
         if any(qvals_bh<0.05)
             fprintf('result for %s \n',colName{1})
         end
-    
         data_BH.(colName{1}) = qvals_bh;
-        data_fdr.(colName{1}) = qvals;
     end
 end
 
@@ -60,9 +54,7 @@ if strcmp(to_correct,'reg-links')
     [idx(:,1),idx(:,2)]= ind2sub([matrixSize, matrixSize], find(triu(ones(matrixSize), 1)==1));
     data_BH.('row') = idx(:,1);
     data_BH.('column') = idx(:,2);
-    data_fdr.('row') = idx(:,1);
-    data_fdr.('column') = idx(:,2);
-
+    
     colNamesToIterate = totest.Properties.VariableNames(2:end);
     for colName = colNamesToIterate
         pvals = totest.(colName{1});
@@ -70,18 +62,11 @@ if strcmp(to_correct,'reg-links')
             fprintf('%s pval over 1', colName{1})
         end
         qvals_bh =  mafdr(pvals, 'BHFDR', 'True');
-        if all(pvals(:))~=pvals(end)
-            qvals = mafdr(pvals);
-        else
-            qvals = qvals_bh;
-        end
     
         if any(qvals_bh<0.05)
             fprintf('result for %s \n',colName{1})
         end
-    
         data_BH.(colName{1}) = qvals_bh;
-        data_fdr.(colName{1}) = qvals;
     end
 
     % keep only the preselected ROIs (DMN, fronto-parietal, cingulo opercular)
@@ -119,4 +104,3 @@ if strcmp(to_correct,'reg-links')
     end
 end
 writetable(data_BH, sprintf('%s/%s_%s_%s_BHcorrected.xlsx', path, to_correct, strategy, atlas_name))
-%writetable(data_fdr, sprintf('%s/%s_%s_%s_FDRcorrected.xlsx', path, to_correct, strategy, atlas_name))
