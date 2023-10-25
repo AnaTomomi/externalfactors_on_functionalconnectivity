@@ -78,6 +78,7 @@ if strcmp(to_correct,'reg-links')
         networks = [1, 3, 10, 11];
         preselection = ismember(atlas_info.network, networks);
         atlas_selection = atlas_info(preselection, :);
+        atlas_selection = renamevars(atlas_selection,["x","y","z","network","gordon","index"],["x","y","z","netName","gordon","index"]);
     end
         
     %select the subnetworks
@@ -99,6 +100,16 @@ if strcmp(to_correct,'reg-links')
         % Assign the original indexes back to the data_BH table
         data_BH.row(i) = original_index_row;
         data_BH.column(i) = original_index_column;
+
+        %Include the information from the atlas
+        data_BH.x_from(i) = atlas_selection.x(atlas_selection.index == original_index_row);
+        data_BH.y_from(i) = atlas_selection.y(atlas_selection.index == original_index_row);
+        data_BH.z_from(i) = atlas_selection.z(atlas_selection.index == original_index_row);
+        data_BH.net_from(i) = atlas_selection.netName(atlas_selection.index == original_index_row);
+        data_BH.x_to(i) = atlas_selection.x(atlas_selection.index == original_index_column);
+        data_BH.y_to(i) = atlas_selection.y(atlas_selection.index == original_index_column);
+        data_BH.z_to(i) = atlas_selection.z(atlas_selection.index == original_index_column);
+        data_BH.net_to(i) = atlas_selection.netName(atlas_selection.index == original_index_column);
     end
 end
 writetable(data_BH, sprintf('%s/%s_%s_%s_BHcorrected.xlsx', path, to_correct, strategy, atlas_name))
