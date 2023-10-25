@@ -27,7 +27,7 @@ from utils import get_behav_data_movie, nearest_neighbors, anna_karenina
 conn_path = '/m/cs/scratch/networks-pm/effects_externalfactors_on_functionalconnectivity/data/mri/conn_matrix/movie'
 behav_path = '/m/cs/scratch/networks-pm/effects_externalfactors_on_functionalconnectivity/data/behavioral/'
 
-savepath = '/m/cs/scratch/networks-pm/effects_externalfactors_on_functionalconnectivity/results/H4_movie'
+savepath = '/m/cs/scratch/networks-pm/effects_externalfactors_on_functionalconnectivity/results/H4'
 strategy = '24HMP-8Phys-4GSR-Spike_HPF'
 atlas_name = sys.argv[1]
 scrub = sys.argv[2]
@@ -81,6 +81,7 @@ ak = Adjacency(ak, matrix_type='similarity')
 mantel_nn_file = f'{savepath}/mantel-nn_{strategy}_{atlas_name}_{variable}-{specific}_scrub-{scrub}_thr-{str(thr)}_per-{str(percent)}.json'
 mantel_ak_file= f'{savepath}/mantel-ak_{strategy}_{atlas_name}_{variable}-{specific}_scrub-{scrub}_thr-{str(thr)}_per-{str(percent)}.json'
 
+# Select only for the pre-registered rois
 if atlas_name=='seitzman-set1':
     atlas_info = pd.read_excel('/m/cs/scratch/networks-pm/effects_externalfactors_on_functionalconnectivity/data/mri/conn_matrix/movie/group_seitzman-set1_info.xlsx')
     atlas_info = atlas_info[atlas_info['netName'].isin(['DefaultMode', 'FrontoParietal', 'Salience'])]
