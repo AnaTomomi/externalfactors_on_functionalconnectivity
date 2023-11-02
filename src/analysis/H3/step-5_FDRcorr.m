@@ -14,8 +14,9 @@ clc
 path = '/m/cs/scratch/networks-pm/effects_externalfactors_on_functionalconnectivity/results/H3';
 strategy = '24HMP-8Phys-Spike_HPF';
 atlas_name = 'seitzman-set1';
+thr = 0.1;
 atlas_path = '/m/cs/scratch/networks-pm/effects_externalfactors_on_functionalconnectivity/data/mri/conn_matrix/rs';
-to_correct = 'reg-links'; %'reg-links' or 'parti-coeff'
+to_correct = 'global-eff'; %'reg-links' or 'parti-coeff'
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if strcmp(atlas_name,'seitzman-set1')
@@ -24,7 +25,11 @@ else
     matrixSize = 141;
 end
 
-filepath = sprintf('%s/%s_%s_%s.csv', path, to_correct, strategy, atlas_name);
+if strcmp(to_correct,'reg-links')
+    filepath = sprintf('%s/%s_%s_%s.csv', path, to_correct, strategy, atlas_name);
+else
+    filepath = sprintf('%s/%s_%s_%s_thr-%s.csv', path, to_correct, strategy, atlas_name,num2str(thr*100));
+end
 data = readtable(filepath);
 
 data = data(~contains(data.Var1, 'Intercept'), :); % Filter out the intercept
@@ -35,7 +40,7 @@ totest = unstack(data, 'p_values','Var1'); % Pivot the table
 %Start the multiple comparison correction
 data_BH = totest;
 colNamesToIterate = totest.Properties.VariableNames(2:end);
-if strcmp(to_correct,'parti-coeff')
+if strcmp(to_correct,'parti-coeff') | strcmp(to_correct,'global-eff')
     for colName = colNamesToIterate
         pvals = totest.(colName{1});
         if max(pvals)>1
@@ -112,4 +117,4 @@ if strcmp(to_correct,'reg-links')
         data_BH.net_to(i) = atlas_selection.netName(atlas_selection.index == original_index_column);
     end
 end
-writetable(data_BH, sprintf('%s/%s_%s_%s_BHcorrected.xlsx', path, to_correct, strategy, atlas_name))
+writetable(data_BH, sprintf('%s/%s_%s_%s_thr-%s_BHcorrected.xlsx', path, to_correct, strategy, atlas_name,num2str(thr*100)))
