@@ -15,17 +15,21 @@ savepath = '/m/cs/scratch/networks-pm/effects_externalfactors_on_functionalconne
 task = 'pvt'
 strategy = sys.argv[1]
 atlas_name = sys.argv[2]
+thres = sys.argv[3]#'thr-10'
+variable = sys.argv[4] #'global-eff'
 lag_no = 16
-node = sys.argv[3]
+net = sys.argv[5]
 ###############################################################################
 
-#Transform node to number format
-node = int(node)
+#Transform net/node to number format
+node = int(net)
 
-#load global efficiency data
-pc = loadmat(f'{path}/mri/conn_matrix/{task}/{strategy}/parti-coeff_{strategy}_{atlas_name}')['pc']
-node_num = pc.shape[1]
-print('PC loaded!')
+#load the data
+if variable == 'global-eff':
+    pc = loadmat(f'{path}/mri/conn_matrix/{task}/{strategy}/{variable}_{strategy}_{atlas_name}_{thres}')['effs']
+else:
+    pc = loadmat(f'{path}/mri/conn_matrix/{task}/{strategy}/{variable}_{strategy}_{atlas_name}_{thres}')['pcs']
+print('Data loaded!')
 
 #Load real data
 variables = ['total_sleep_duration','awake_time','restless_sleep']
@@ -42,7 +46,7 @@ print('surrogate data loaded')
     
 #compute fake correlations
 columns = list(behav.columns)
-filename = f'{savepath}/temp_fake_corr_values_{strategy}_{atlas_name}_node_{node}.pkl'
+filename = f'{savepath}/temp_fake_corr_values_{variable}_{strategy}_{atlas_name}_{thres}_net_{node}.pkl'
 print(f'fake corr for {filename}')
 
 fake_corr_values = np.zeros((len(variables), lag_no, len(surrogate_data)))
