@@ -1,7 +1,7 @@
 #!/bin/bash
-#SBATCH --time=08:00:00
+#SBATCH --time=00:10:00
 #SBATCH --mem=16G
-#SBATCH --array=1-4
+#SBATCH --array=1-12
 #SBATCH --output=/m/cs/scratch/networks-pm/jobs/H3regress-%j.out
 #SBATCH --cpus-per-task=4
 
@@ -11,4 +11,4 @@ variants=`sed "${n}q;d" options.txt`
 module load r
 Rscript /m/cs/scratch/networks-pm/effects_externalfactors_on_functionalconnectivity/src/analysis/H3/eff.R $variants
 Rscript /m/cs/scratch/networks-pm/effects_externalfactors_on_functionalconnectivity/src/analysis/H3/pc.R $variants
-Rscript /m/cs/scratch/networks-pm/effects_externalfactors_on_functionalconnectivity/src/analysis/H3/links.R $variants
+#Rscript /m/cs/scratch/networks-pm/effects_externalfactors_on_functionalconnectivity/src/analysis/H3/links.R $variants

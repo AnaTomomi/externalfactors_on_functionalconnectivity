@@ -1,4 +1,12 @@
-24HMP-8Phys-Spike_HPF seitzman-set1
-24HMP-8Phys-Spike_HPF seitzman-set2
-24HMP-8Phys-4GSR-Spike_HPF seitzman-set1
-24HMP-8Phys-4GSR-Spike_HPF seitzman-set2
+24HMP-8Phys-Spike_HPF seitzman-set1 thr-10
+24HMP-8Phys-Spike_HPF seitzman-set1 thr-20
+24HMP-8Phys-Spike_HPF seitzman-set1 thr-30
+24HMP-8Phys-Spike_HPF seitzman-set2 thr-10
+24HMP-8Phys-Spike_HPF seitzman-set2 thr-20
+24HMP-8Phys-Spike_HPF seitzman-set2 thr-30
+24HMP-8Phys-4GSR-Spike_HPF seitzman-set1 thr-10
+24HMP-8Phys-4GSR-Spike_HPF seitzman-set1 thr-20
+24HMP-8Phys-4GSR-Spike_HPF seitzman-set1 thr-30
+24HMP-8Phys-4GSR-Spike_HPF seitzman-set2 thr-10
+24HMP-8Phys-4GSR-Spike_HPF seitzman-set2 thr-20
+24HMP-8Phys-4GSR-Spike_HPF seitzman-set2 thr-30

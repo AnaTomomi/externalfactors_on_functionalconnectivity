@@ -10,6 +10,7 @@ if (length(args) < 2) {
 }
 strategy <- args[1]
 atlas_name <- args[2]
+thres <- args[3]
 
 #Check that the packages we need are installed
 pkg_list <- c("R.matlab", "xlsx", "lmPerm")
@@ -35,7 +36,7 @@ n_subjects <- 30
 floor_value <- 2.2e-15
 
 # load the dependent variable
-pc <- readMat(paste(path, strategy, paste0("parti-coeff_", strategy, "_", atlas_name, ".mat"), sep="/"))
+pc <- readMat(paste(path, strategy, paste0("parti-coeff_", strategy, "_", atlas_name, "_", thres, ".mat"), sep="/"))
 pc <- pc$pc
 num_rois <- ncol(pc)
 
@@ -73,7 +74,7 @@ for (i in 1:num_rois) {
                           f_statistic = model_summary$fstatistic[1],
                           f_p_value = pf(model_summary$fstatistic[1], model_summary$fstatistic[2], model_summary$fstatistic[3], lower.tail = FALSE),
                           standardized_betas = standardized_betas,
-                          node = i)
+                          net = i)
   
   result_df <- rbind(result_df, result_col)
 }
@@ -82,5 +83,5 @@ if (0 %in% result_df$p_values) {
   result_df$p_values[result_df$p_values < floor_value] <- floor_value
 }
 
-save_file = paste(save_path, paste0("parti-coeff_", strategy, "_", atlas_name, ".csv"), sep="/")
+save_file = paste(save_path, paste0("parti-coeff_", strategy, "_", atlas_name, "_", thres, ".csv"), sep="/")
 write.csv(result_df, save_file, row.names = TRUE)
