@@ -30,6 +30,11 @@ set.seed(0)
 # Number of subjs
 n_subjects <- 30
 
+# Set a floor value for the p-vals in case one is too small, in which case
+# R will save the value as 0 and can cause problems when performing the FDR correction
+# Thus. any value below the floor will be saved as the floor
+floor_value <- 2.2e-15
+
 # load the dependent variable
 eff <- readMat(paste(path, strategy, paste0("global-eff_", strategy, "_", atlas_name, "_", thres, ".mat"), sep = "/"))
 eff <- eff$eff
