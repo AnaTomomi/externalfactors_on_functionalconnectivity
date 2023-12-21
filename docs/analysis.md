@@ -48,7 +48,7 @@ The fourth hypothesis states " Increased similarity in the sleep, autonomic nerv
 The fifth hypothesis states "Sleep patterns experienced over the past fifteen days are correlated with functional connectivity in the fronto-parietal, default mode, somatomotor, and cingulo-opercular networks during sustained attention tasks".
 0. Compute the lagged behavioral data. Use the function *get_behav_data_15days* in the **utils.py** general script to do so. Use it with lag=16.
 1. Create the surrogate data by running the script **create_fake_data.py** in the general folder.
-2. Run the **step-1_compute_lagged_corr_eff.sh** script to compute the lagged correlations for the global efficiency. The script uses the *options.txt* file and the *compute_lagged_corr_eff.py* script. 
+2. Run the **step-1_compute_fake_corrs.sh** script to compute the correlations for global efficiency and participation coefficients with the surrogate data. The script uses the *nodes.txt* file and the *compute_fake_corr.py* script. 
 3. Run the **step-2_compute_laggedcorr.sh** script to compute the lagged correlations for the participation coefficient. Warning! This process may take up to 2 days of computations. The script uses the *options.txt* file and the *compute_lagged_corr_pc.py* script. 
 4. Run the **step-3_FDRcorr.m** to correct for multiple comparisons.
 
@@ -56,14 +56,24 @@ The fifth hypothesis states "Sleep patterns experienced over the past fifteen da
 The sixth hypothesis states "Sleep and physical activity patterns experienced over the past fifteen days are correlated with functional connectivity in the default mod, fronto-parietal, and somatomotor networks during working memory tasks".
 0. Compute the lagged behavioral data. Use the function *get_behav_data_15days* in the **utils.py** general script to do so. Use it with lag=16.
 1. Create the surrogate data by running the script **create_fake_data.py** in the general folder. If you have created already the surrogate data, there is no need to do it again. 
-2. Run the **step-1_compute_lagged_corr_eff.sh** script to compute the lagged correlations for the global efficiency. The script uses the *options.txt* file and the *compute_lagged_corr_eff.py* script. 
+2. Run the **step-1_compute_fake_corrs.sh** script to compute the correlations for global efficiency and participation coefficients with the surrogate data. The script uses the *nodes.txt* file and the *compute_fake_corr.py* script. 
 3. Run the **step-2_compute_laggedcorr.sh** script to compute the lagged correlations for the participation coefficient. Warning! This process may take up to 2 days of computations. The script uses the *options.txt* file and the *compute_lagged_corr_pc.py* script. 
 4. Run the **step-3_FDRcorr.m** to correct for multiple comparisons.
 
-# H5: Resting state
+# H7: Resting state
 The seventh hypothesis states "Sleep, autonomic nervous system activity, and mood patterns experienced over the past fifteen days are correlated with functional connectivity in the default mode, frontoparietal, and cingulo-opercular networks during resting-state fMRI".
 0. Compute the lagged behavioral data. Use the function *get_behav_data_15days* in the **utils.py** general script to do so. Use it with lag=16.
 1. Create the surrogate data by running the script **create_fake_data.py** in the general folder. If you have created already the surrogate data, there is no need to do it again. 
-2. Run the **step-1_compute_lagged_corr_eff.sh** script to compute the lagged correlations for the global efficiency. The script uses the *options.txt* file and the *compute_lagged_corr_eff.py* script. 
+2. Run the **step-1_compute_fake_corrs.sh** script to compute the correlations for global efficiency and participation coefficients with the surrogate data. The script uses the *nodes.txt* file and the *compute_fake_corr.py* script. 
 3. Run the **step-2_compute_laggedcorr.sh** script to compute the lagged correlations for the participation coefficient. Warning! This process may take up to 2 days of computations. The script uses the *options.txt* file and the *compute_lagged_corr_pc.py* script. 
 4. Run the **step-3_FDRcorr.m** to correct for multiple comparisons.
+
+# H8: Movie decoder
+The eight and final hypothesis states "Between-days time-segment classification accuracy is explained by daily behavioral, physiological, and lifestyle factors".
+1. Run the ISCToolbox and make sure to check the box that saves the matrices as memory maps.
+2. Pre-compute the spheres to be used by running the script
+3. Compute the decode-maps by running the script 
+4. Merege the maps by running the script
+5. 
+
+# Supplementary analysis
