@@ -41,19 +41,19 @@ pc <- pc$pc
 num_rois <- ncol(pc)
 
 #load the independent variables
-beh <- read.xlsx(paste(beh_path, "behavioral/sub-01_day-lag1_task_movie.xlsx", sep="/"), sheetIndex = 1)
+beh <- read.xlsx(paste(beh_path, "behavioral/sub-01_day-lag1_task_rs.xlsx", sep="/"), sheetIndex = 1)
 eye <- read.csv(paste(beh_path, "/mri/sub-01_day-all_device-eyetracker.csv", sep="/"))
 eye$resting <- ifelse(is.na(eye$resting), 0, eye$resting) #fill in the NaNs with the median (0)
 
 # Combine into a data frame
 data <- data.frame(pc, beh, eye$resting)
-names(data)[names(data) == "eye.resting"] <- "eye_resting"
+names(data)[names(data) == "eye.resting"] <- "resting"
 
 # Loop through the first num_rois columns, i.e. each node in the adjacency matrix
 result_df <- data.frame()
 for (i in 1:num_rois) {
   col_name <- colnames(data)[i] # Extract column name
-  formula_str <- paste0(col_name, " ~ total_sleep_duration + awake_time + restless_sleep + pa_mean + pa_std + na_mean + stress_mean + pain_mean + mean_respiratory_rate_brpm + min_respiratory_rate_brpm + max_respiratory_rate_brpm + mean_prv_rmssd_ms + min_prv_rmssd_ms + max_prv_rmssd_ms + std_prv_rmssd_ms + eye_resting") # Construct the formula dynamically
+  formula_str <- paste0(col_name, " ~ total_sleep_duration + awake_time + restless_sleep + pa_mean + pa_std + na_mean + stress_mean + pain_mean + mean_respiratory_rate_brpm + min_respiratory_rate_brpm + max_respiratory_rate_brpm + mean_prv_rmssd_ms + min_prv_rmssd_ms + max_prv_rmssd_ms + resting") # Construct the formula dynamically
   model <- lmp(as.formula(formula_str), data = data, perm="Prob", maxIter=10000, Ca=1e-09, center=FALSE)
   model_summary <- summary(model)
   
