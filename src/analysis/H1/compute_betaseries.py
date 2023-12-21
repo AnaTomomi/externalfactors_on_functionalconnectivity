@@ -46,8 +46,8 @@ if task == 'pvt':
     events.rename(columns={"response_time":"modulation"},inplace=True)
     events = events[['onset','trial_type','duration','modulation']]
     #The contrast for the PVT is "OK" + "lapse" as we have RT for both events. 
-    #Therefore, to compute the beta series, we need all events in ORDER so that the
-    #when we compute the correlations, the time series of evetns are in order. 
+    #Therefore, to compute the beta series, we need all events in ORDER so that 
+    #when we compute the correlations, the time series of events are in order. 
     #Otherwise, we would have correlations of 1 or 2 betas for lapses. 
     #Consequently, the lapse trial_type changes for "OK"
     events.loc[events['trial_type'] == 'lapse', 'trial_type'] = 'OK'
