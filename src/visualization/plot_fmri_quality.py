@@ -85,9 +85,12 @@ for i, key in enumerate(mean_fd):
     df.dropna(inplace=True)
     df_melted = df.melt(var_name='Session', value_name='Value')
     ax = sns.violinplot(x='Session',y='Value',data=df_melted,ax=axes[i])
+    ax.hlines(y=0.2, xmin=-1, xmax=30, linewidth=2, color='r', linestyle='--')
+    ax.hlines(y=0.5, xmin=-1, xmax=30, linewidth=2, color='r', linestyle='--')
     trans = mtransforms.ScaledTranslation(-20/72, 7/72, fig.dpi_scale_trans)
     axes[i].text(0.0, 1.0, label[i], transform=axes[i].transAxes + trans, va='bottom')
     axes[i].set_ylim(0, 1.5)
+    axes[i].set_xlim(-1, 30)
     axes[i].set_ylabel('framewise \ndisplacement')
     if i != len(mean_fd) - 1:  # If not the last subplot, clear the x-label
         axes[i].set_xlabel('')

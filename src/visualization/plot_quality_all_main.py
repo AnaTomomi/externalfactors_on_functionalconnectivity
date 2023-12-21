@@ -21,8 +21,8 @@ import seaborn as sns
 import matplotlib.dates as mdates
 
 
-path = sys.argv[1]
-savepath = sys.argv[2]
+path = '/m/cs/scratch/networks-pm/effects_externalfactors_on_functionalconnectivity/data'#sys.argv[1]
+savepath = '/m/cs/scratch/networks-pm/effects_externalfactors_on_functionalconnectivity/results' #sys.argv[2]
 begin = '2023-01-01'
 end = '2023-05-13'
 
@@ -43,7 +43,7 @@ nback.rename(columns={'data':'n-back'}, inplace=True)
 
 #behavioral 
 ring = pd.read_csv(f'{path}/behavioral/sub-01_day-all_device-oura.csv', index_col=0)
-sleep = mask_data(ring,'Total Sleep Duration')
+sleep = mask_data(ring,'total_sleep_duration')
 sleep.rename(columns={'data':'sleep'}, inplace=True)
 activity = mask_data(ring, 'Steps')
 activity.rename(columns={'data':'activity'}, inplace=True)
@@ -65,6 +65,7 @@ loc.index = loc.index.strftime('%d-%m-%Y')
 emp = pd.read_csv(f'{path}/behavioral/sub-01_day-all_device-embraceplus_quality.csv', index_col=0)
 emp = emp[['pulse rate', 'pulse rate variability', 'breathing rate']]
 emp = 100-emp
+emp.rename(columns={'pulse rate':'heart rate', 'pulse rate variability':'heart rate variability'}, inplace=True)
 
 #questionnaires
 q = pd.read_excel(f'{path}/questionnaires/sub-01_day-all_device-questionnaire_score-initial.xlsx', sheet_name="pss")
@@ -87,7 +88,6 @@ eye['data'] = eye.notna().astype(int).sum(axis=1)
 eye = ((eye['data']/max_no)*100).to_frame()
 
 mri = pd.read_csv(f'{path}/mri/sub-01_day-all_device-mri.csv', index_col=0)
-mri = mri.iloc[1:]
 mri['date'] = pd.to_datetime(mri['date'], dayfirst=True).dt.strftime('%d-%m-%Y')
 mri['fmriprep'] = np.where(mri['fmriprep'] == 'ok', 100, 0)
 mri['biopac'] = np.where(mri['biopac'] == 'ok', 100, 75) #we know that only one biopac failed
@@ -104,7 +104,8 @@ mri.drop(columns={'subject'},inplace=True)
 data_frames = [pvt, nback, sleep, activity, ema, bat, loc, emp, q, mri]
 df = pd.concat(data_frames, axis=1)
 df.index = pd.to_datetime(df.index, dayfirst=True)
-df = df.loc[begin:end]
+dates = pd.date_range(begin, end)
+df = df[df.index.isin(dates)]
 
 #plot the quality
 cmap = plt.cm.YlGnBu
