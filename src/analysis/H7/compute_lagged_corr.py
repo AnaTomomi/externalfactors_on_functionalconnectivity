@@ -32,8 +32,8 @@ net_num = pc.shape[1]
 variables = ['total_sleep_duration','awake_time','restless_sleep','pa_mean','pa_std', 
              'na_mean','stress_mean','pain_mean','mean_respiratory_rate_brpm', 
              'min_respiratory_rate_brpm','max_respiratory_rate_brpm','mean_prv_rmssd_ms',
-             'min_prv_rmssd_ms','max_prv_rmssd_ms','std_prv_rmssd_ms'] 
-behav = get_behav_data_15days(f'{path}/behavioral',days=16)
+             'min_prv_rmssd_ms','max_prv_rmssd_ms'] 
+behav = get_behav_data_15days(f'{path}/behavioral/',days=16)
 
 #Select only the columns of interest for the hypothesis
 selected_cols = [col for col in behav.columns if any(var in col for var in variables)]

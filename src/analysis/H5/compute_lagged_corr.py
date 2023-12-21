@@ -30,7 +30,7 @@ net_num = pc.shape[1]
 
 #Load real data
 variables = ['total_sleep_duration','awake_time','restless_sleep']
-behav = get_behav_data_15days(f'{path}/behavioral',days=16)
+behav = get_behav_data_15days(f'{path}/behavioral/',days=16)
 
 #Select only the columns of interest for the hypothesis
 selected_cols = [col for col in behav.columns if any(var in col for var in variables)]
