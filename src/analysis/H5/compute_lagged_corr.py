@@ -35,7 +35,6 @@ behav = get_behav_data_15days(f'{path}/behavioral/',days=16)
 #Select only the columns of interest for the hypothesis
 selected_cols = [col for col in behav.columns if any(var in col for var in variables)]
 behav = behav[selected_cols]
-behav = zscore(behav) #z-score standardization
 
 #compute the real correlation for each node
 columns = list(behav.columns)
