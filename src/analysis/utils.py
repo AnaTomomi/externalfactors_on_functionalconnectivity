@@ -10,6 +10,7 @@ import math
 from scipy.io import savemat, loadmat
 from scipy.spatial.distance import euclidean
 from scipy.stats import gaussian_kde
+from scipy.stats import zscore
 from scipy.interpolate import interp1d
 
 import nibabel as nib
@@ -361,6 +362,7 @@ def get_behav_data_15days(behav_path, days=16, behav=None):
     '''
     if behav is None:
         behav = get_behav_data(behav_path)
+        behav = zscore(behav)
     else:
         behav = behav.copy()
 
@@ -654,7 +656,7 @@ def compute_real_corr(behav_path, variables, pc, lag_no):
     '''
     
     #Load behavioral data
-    behav = get_behav_data_15days(f'{behav_path}/behavioral',days=16)
+    behav = get_behav_data_15days(f'{behav_path}/behavioral/',days=16)
     selected_cols = [col for col in behav.columns if any(var in col for var in variables)]
     behav = behav[selected_cols]
     num_var = len(variables)

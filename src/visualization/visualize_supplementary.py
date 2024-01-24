@@ -15,12 +15,12 @@ from matplotlib.colors import ListedColormap
 ###############################################################################
 # Change this only!
 path = '/m/cs/scratch/networks-pm/effects_externalfactors_on_functionalconnectivity/results/supplementary'
-strategy = '24HMP-8Phys-4GSR-Spike_HPF'
+strategy = '24HMP-8Phys-Spike_HPF'
 alpha = 0.05
 ###############################################################################
 
 #Set common parameters for the plots
-plt.rcParams['font.size'] = 16
+plt.rcParams['font.size'] = 14
 plt.rcParams['font.family'] = 'Arial'
 
 #set colors and graphics paramteres
