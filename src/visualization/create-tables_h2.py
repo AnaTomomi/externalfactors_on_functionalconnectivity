@@ -6,7 +6,6 @@ the node coordinates for H2
 """
 import os
 import pandas as pd
-import numpy as np
 
 ###############################################################################
 # Change this!
@@ -14,32 +13,40 @@ path = '/m/cs/scratch/networks-pm/effects_externalfactors_on_functionalconnectiv
 atlas_path = '/m/cs/scratch/networks-pm/effects_externalfactors_on_functionalconnectivity/data/mri/conn_matrix/'
 task = 'nback'
 atlas_name = 'seitzman-set1'
-strategy = '24HMP-8Phys-Spike_HPF'
+strategy = '24HMP-8Phys-4GSR-Spike_HPF'
+thres = ['thr-10', 'thr-20', 'thr-30']
 alpha = 0.05
 ###############################################################################
 
 #Define the file to save
 savefile = f'{path}/{strategy}_{atlas_name}_finaltable.xlsx'
-
-#Standardize the atlas info
-atlas_info = pd.read_excel(f'{atlas_path}/{task}/group_{atlas_name}_info.xlsx')
-if atlas_name=='seitzman-set1':
-    atlas_info.drop(columns=['radiusmm', 'netWorkbenchLabel','integrativePercent', 'Power', 'AnatomicalLabels'],inplace=True)
-    atlas_info.rename(columns={'netName':'network'},inplace=True)
-else:
-    network_mapping = {0:'unassigned',1:'DefaultMode',2:'Visual',3:'FrontoParietal',
-    4:'StriatalOrbitofrontalAmygdalar',5:'DorsalAttention',7:'VentralAttention',
-    8:'Salience',9:'CinguloOpercular',10:'SomatomotorDorsal',11:'SomatomotorLateral',
-    12:'Auditory',14:'MedialTemporalLobe',15:'ParietalMedial',16:'ParietoOccipital',
-    22:'unassigned'}
-    atlas_info['network'] = atlas_info['network'].replace(network_mapping)
-    atlas_info.rename(columns={'gordon':'roi'},inplace=True)
+cols = ['total_sleep_duration','awake_time','restless_sleep','steps','inactive_time']
+network_mapping = {1: 'default mode',2: 'fronto parietal',3: 'somatomotor'}
 
 #For global efficiency
 measure = 'global-eff'
-data = pd.read_csv(f'{path}/{measure}_{strategy}_{atlas_name}.csv')
-results = data[data['p_values'] < alpha][['Unnamed: 0', 'p_values', 'standardized_betas']]
-results.columns = ['variable', 'p-value', 'standardized beta']
+all_results=[]
+for thr in thres:
+    pc = pd.read_csv(f'{path}/{measure}_{strategy}_{atlas_name}_{thr}.csv')
+    pc.rename(columns={'Unnamed: 0':'variable'}, inplace=True)
+    pc['variable'] = pc['variable'].str.replace(r'\d+$', '')
+
+    data = pd.read_excel(f'{path}/{measure}_{strategy}_{atlas_name}_{thr}_BHcorrected.xlsx')
+    data = data.melt(id_vars=['net'], value_vars=cols,var_name='variable', value_name='p')
+    data.sort_values(by=['net'], ascending=True, inplace=True)
+    data = data[data['p']<alpha]
+
+    results = pd.merge(data, pc, on=['net', 'variable'], how='left')
+    results = results[['net', 'variable', 'standardized_betas', 'p']]
+    results.rename(columns={'net':'network','variable':'external factor', 
+                        'standardized_betas':'beta', 'p':'p-value'},inplace=True)
+    results['beta'] = results['beta'].round(decimals=2)
+    results.loc[:,'network'] = results['network'].map(network_mapping)
+    results.loc[:, 'external factor'] = results['external factor'].str.replace('_', ' ')
+    results['threshold'] = int(thr[-2:])/100
+    all_results.append(results)
+results = pd.concat(all_results)
+
 if os.path.exists(savefile):
     with pd.ExcelWriter(savefile, engine='openpyxl', mode='a') as writer:
         results.to_excel(writer, sheet_name=measure, index=False)
@@ -50,20 +57,28 @@ del results
 
 #For participation coefficient
 measure='parti-coeff'
-pc = pd.read_csv(f'{path}/{measure}_{strategy}_{atlas_name}.csv')
-pc['Unnamed: 0'] = pc['Unnamed: 0'].str.replace(r'\d+$', '')
+all_results=[]
+for thr in thres:
+    pc = pd.read_csv(f'{path}/{measure}_{strategy}_{atlas_name}_{thr}.csv')
+    pc.rename(columns={'Unnamed: 0':'variable'}, inplace=True)
+    pc['variable'] = pc['variable'].str.replace(r'\d+$', '')
 
-data = pd.read_excel(f'{path}/{measure}_{strategy}_{atlas_name}_BHcorrected.xlsx')
-data = pd.concat([data, atlas_info], axis=1)
-melted_data = pd.melt(data, id_vars=['x', 'y', 'z', 'network', 'node'],value_vars=data.columns[1:-5],
-                      var_name='variable', value_name='p-value')
-results = melted_data[melted_data['p-value'] < alpha].reset_index(drop=True)
-results = pd.merge(results, pc[['node', 'Unnamed: 0', 'standardized_betas']], 
-                  left_on=['node', 'variable'], right_on=['node', 'Unnamed: 0'], 
-                  how='left')
-results.drop(columns=['node', 'Unnamed: 0'],inplace=True)
-results = results.sort_values(by=['x', 'y', 'z']).reset_index(drop=True)
-results = results[['variable', 'standardized_betas', 'p-value', 'x', 'y', 'z', 'network']]
+    data = pd.read_excel(f'{path}/{measure}_{strategy}_{atlas_name}_{thr}_BHcorrected.xlsx')
+    data = data.melt(id_vars=['net'], value_vars=cols, var_name='variable', value_name='p')
+    data.sort_values(by=['net'], ascending=True, inplace=True)
+    data = data[data['p']<alpha]
+
+    results = pd.merge(data, pc, on=['net', 'variable'], how='left')
+    results = results[['net', 'variable', 'standardized_betas', 'p']]
+    results.rename(columns={'net':'network','variable':'external factor', 
+                        'standardized_betas':'beta', 'p':'p-value'},inplace=True)
+    results['beta'] = results['beta'].round(decimals=2)
+    results.loc[:,'network'] = results['network'].map(network_mapping)
+    results.loc[:, 'external factor'] = results['external factor'].str.replace('_', ' ')
+    results['threshold'] = int(thr[-2:])/100
+    all_results.append(results)
+results = pd.concat(all_results)
+
 if os.path.exists(savefile):
     with pd.ExcelWriter(savefile, engine='openpyxl', mode='a') as writer:
         results.to_excel(writer, sheet_name=measure, index=False)
@@ -80,19 +95,29 @@ links['Unnamed: 0'] = links['Unnamed: 0'].str.replace(r'\d+$', '')
 data = pd.read_excel(f'{path}/{measure}_{strategy}_{atlas_name}_BHcorrected.xlsx')   
 melted_data = pd.melt(data, id_vars=['x_from', 'y_from', 'z_from', 'net_from',
                                      'x_to', 'y_to', 'z_to', 'net_to', 'link'],
-                      value_vars=data.columns[1:6],
+                      value_vars=data.columns[1:4],
                       var_name='variable', value_name='p-value')
 results = melted_data[melted_data['p-value'] < alpha].reset_index(drop=True)
 results = pd.merge(results, links[['link', 'Unnamed: 0', 'standardized_betas']], 
                   left_on=['link', 'variable'], right_on=['link', 'Unnamed: 0'], 
                   how='left')
-results.drop(columns=['link', 'Unnamed: 0'],inplace=True)
 results = results[['variable', 'standardized_betas', 'p-value', 'x_from', 
-                   'y_from', 'z_from', 'net_from', 'x_to', 'y_to', 'z_to', 'net_to']]
-
+                   'y_from', 'z_from', 'net_from', 'x_to', 'y_to', 'z_to', 
+                   'net_to']]
+results.rename(columns={'variable':'external factor', 'standardized_betas':'beta',
+                        'net_from':'network_from','net_to':'network_to'},inplace=True)
+results['beta'] = results['beta'].round(decimals=2)
+results.loc[:, 'external factor'] = results['external factor'].str.replace('_', ' ')
 if atlas_name == 'seitzman-set2':
-    results['net_from'] = results['net_from'].replace(network_mapping)
-    results['net_to'] = results['net_to'].replace(network_mapping)
+    results['network_from'] = results['network_from'].replace({1:'default mode',3:'fronto parietal',9:'cingulo opercular',10:'somatomotor', 11:'somatomotor'})
+    results['network_to'] = results['network_to'].replace({1:'default mode',3:'fronto parietal',9:'cingulo opercular',10:'somatomotor', 11:'somatomotor'})
+results.loc[:,'network_from'] = results['network_from'].str.replace(r'([a-z])([A-Z])', r'\1 \2').str.lower()
+results['network_from'] = results['network_from'].replace({'somatomotor dorsal': 'somatomotor', 
+                                                           'somatomotor lateral': 'somatomotor'})
+results.loc[:,'network_to'] = results['network_to'].str.replace(r'([a-z])([A-Z])', r'\1 \2').str.lower()
+results['network_to'] = results['network_to'].replace({'somatomotor dorsal': 'somatomotor', 
+                                                       'somatomotor lateral': 'somatomotor'})  
+    
 if os.path.exists(savefile):
     with pd.ExcelWriter(savefile, engine='openpyxl', mode='a') as writer:
         results.to_excel(writer, sheet_name=measure, index=False)

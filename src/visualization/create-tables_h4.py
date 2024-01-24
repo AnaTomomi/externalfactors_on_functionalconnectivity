@@ -63,6 +63,7 @@ def check_results_movie(files):
         if q>-1:
             answer.append(file_name)
     return answer
+
 ###############################################################################
 
 # Check if there are any significant results
@@ -71,6 +72,9 @@ hard = check_results_movie(files)
 
 files = sorted(glob.glob(path + f'/mantel*soft*.json', recursive=True))
 soft = check_results_movie(files)
+
+# Removing duplicate results in the stability table
+
 
 # Check the stability of results
 df = pd.DataFrame(columns=['behavior','ROI', 'model', 'strategy', 'parcel', 'scrub', 'r', 'p'])
@@ -89,8 +93,12 @@ for file in hard:
             df = df.append({'behavior':"_".join([var[4],var[5]]),'ROI': roi, 'model':var[0][7:], 'strategy': var[1], 
                             'parcel': var[3],'scrub':"_".join([var[7],var[9]])[6:-5], 
                             'r': pd.Series(r).values[roi],'p': q[1][roi]}, ignore_index=True)
+        elif len(var)==11: 
+            df = df.append({'behavior':"-".join([var[4],var[5]]),'ROI': roi, 'model':var[0][7:], 'strategy': var[1], 
+                        'parcel': var[3],'scrub': "_".join([var[8],var[10]])[6:-5], 
+                        'r': pd.Series(r).values[roi],'p': q[1][roi]}, ignore_index=True)
         else: 
-            df = df.append({'behavior':"_".join([var[4],var[5]]),'ROI': roi, 'model':var[0][7:], 'strategy': var[1], 
+            df = df.append({'behavior':"-".join([var[4],var[5]]),'ROI': roi, 'model':var[0][7:], 'strategy': var[1], 
                         'parcel': var[3],'scrub':"_".join([var[6],var[8]])[6:-5], 
                         'r': pd.Series(r).values[roi],'p': q[1][roi]}, ignore_index=True)
         
@@ -99,6 +107,8 @@ for file in hard:
         var_other = var.copy()
         if var_other[4]=='sleep-total':
             var_other[7] = 'scrub-soft'
+        elif var_other[5] == 'prv':
+            var_other[8] = 'scrub-soft'
         else:
             var_other[6] = 'scrub-soft'
         other_file = "_".join(var_other)
@@ -109,6 +119,11 @@ for file in hard:
                             'strategy': var_other[1], 'parcel': var_other[3],
                             'scrub':"_".join([var_other[7],var_other[9]])[6:-5], 
                             'r': pd.Series(r).values[roi],'p': q[1][roi]}, ignore_index=True)
+        elif len(var)==11:
+            df = df.append({'behavior':"_".join([var_other[4],var_other[5]]),'ROI': roi, 'model':var[0][7:], 
+                        'strategy': var_other[1], 'parcel': var_other[3],
+                        'scrub':"_".join([var_other[8],var_other[10]])[6:-5], 
+                        'r': pd.Series(r).values[roi],'p': q[1][roi]}, ignore_index=True)
         else:
             df = df.append({'behavior':"_".join([var_other[4],var_other[5]]),'ROI': roi, 'model':var[0][7:], 
                         'strategy': var_other[1], 'parcel': var_other[3],
@@ -124,6 +139,11 @@ for file in hard:
                             'strategy': var_other[1], 'parcel': var_other[3],
                             'scrub':"_".join([var_other[7],var_other[9]])[6:-5], 
                             'r': pd.Series(r).values[roi],'p': q[1][roi]}, ignore_index=True)
+        elif len(var)==11:
+            df = df.append({'behavior':"_".join([var_other[4],var_other[5]]),'ROI': roi, 'model':var[0][7:], 
+                        'strategy': var_other[1], 'parcel': var_other[3],
+                        'scrub':"_".join([var_other[8],var_other[10]])[6:-5], 
+                        'r': pd.Series(r).values[roi],'p': q[1][roi]}, ignore_index=True)
         else: 
             df = df.append({'behavior':"_".join([var_other[4],var_other[5]]),'ROI': roi, 'model':var[0][7:],
                         'strategy': var_other[1], 'parcel': var_other[3],
@@ -141,6 +161,11 @@ for file in hard:
                             'strategy': var_other[1], 'parcel': var_other[3],
                             'scrub':"_".join([var_other[7],var_other[9]])[6:-5], 
                             'r': pd.Series(r).values[roi],'p': q[1][roi]}, ignore_index=True)
+        elif len(var)==11:
+            df = df.append({'behavior':"_".join([var_other[4],var_other[5]]),'ROI': roi, 'model':var[0][7:], 
+                        'strategy': var_other[1], 'parcel': var_other[3],
+                        'scrub':"_".join([var_other[8],var_other[10]])[6:-5], 
+                        'r': pd.Series(r).values[roi],'p': q[1][roi]}, ignore_index=True)
         else: 
             df = df.append({'behavior':"_".join([var_other[4],var_other[5]]),'ROI': roi, 'model':var[0][7:], 
                         'strategy': var_other[1],'parcel': var_other[3],
@@ -178,18 +203,18 @@ for file in soft:
         r, q = get_results(other_file)
         
         if len(var)==11:
-            df = df.append({'behavior':"_".join([var[4],var[5]]),'ROI': roi, 'model':var[0][7:], 'strategy': var[1], 
-                            'parcel': var[3],'scrub':"_".join([var[8],var[10]])[6:-5], 
+            df = df.append({'behavior':"_".join([var_other[4],var_other[5]]),'ROI': roi, 'model':var_other[0][7:], 'strategy': var_other[1], 
+                            'parcel': var_other[3],'scrub':"_".join([var_other[8],var_other[10]])[6:-5], 
                             'r': pd.Series(r).values[roi],'p': q[1][roi]}, ignore_index=True)
             var_other[8] = 'scrub-hard'
         elif len(var)==10:
-            df = df.append({'behavior':"_".join([var[4],var[5]]),'ROI': roi, 'model':var[0][7:], 'strategy': var[1], 
-                            'parcel': var[3],'scrub':"_".join([var[7],var[9]])[6:-5], 
+            df = df.append({'behavior':"_".join([var_other[4],var_other[5]]),'ROI': roi, 'model':var_other[0][7:], 'strategy': var_other[1], 
+                            'parcel': var_other[3],'scrub':"_".join([var_other[7],var_other[9]])[6:-5], 
                             'r': pd.Series(r).values[roi],'p': q[1][roi]}, ignore_index=True)
             var_other[7] = 'scrub-hard'
         else:
-            df = df.append({'behavior':"_".join([var[4],var[5]]),'ROI': roi, 'model':var[0][7:], 'strategy': var[1], 
-                        'parcel': var[3],'scrub':"_".join([var[6],var[8]])[6:-5], 
+            df = df.append({'behavior':"_".join([var_other[4],var_other[5]]),'ROI': roi, 'model':var_other[0][7:], 'strategy': var_other[1], 
+                        'parcel': var_other[3],'scrub':"_".join([var_other[6],var_other[8]])[6:-5], 
                         'r': pd.Series(r).values[roi],'p': q[1][roi]}, ignore_index=True)
             var_other[6] = 'scrub-hard'
             
@@ -198,16 +223,16 @@ for file in soft:
         r, q = get_results(other_file)
         
         if len(var)==11:
-            df = df.append({'behavior':"_".join([var[4],var[5]]),'ROI': roi, 'model':var[0][7:], 'strategy': var[1], 
-                            'parcel': var[3],'scrub':"_".join([var[8],var[10]])[6:-5], 
+            df = df.append({'behavior':"_".join([var_other[4],var_other[5]]),'ROI': roi, 'model':var_other[0][7:], 'strategy': var_other[1], 
+                            'parcel': var_other[3],'scrub':"_".join([var_other[8],var_other[10]])[6:-5], 
                             'r': pd.Series(r).values[roi],'p': q[1][roi]}, ignore_index=True)
         elif len(var)==10:
-            df = df.append({'behavior':"_".join([var[4],var[5]]),'ROI': roi, 'model':var[0][7:], 'strategy': var[1], 
-                            'parcel': var[3],'scrub':"_".join([var[7],var[9]])[6:-5], 
+            df = df.append({'behavior':"_".join([var_other[4],var_other[5]]),'ROI': roi, 'model':var_other[0][7:], 'strategy': var_other[1], 
+                            'parcel': var_other[3],'scrub':"_".join([var_other[7],var_other[9]])[6:-5], 
                             'r': pd.Series(r).values[roi],'p': q[1][roi]}, ignore_index=True)
         else:
-            df = df.append({'behavior':"_".join([var[4],var[5]]),'ROI': roi, 'model':var[0][7:], 'strategy': var[1], 
-                        'parcel': var[3],'scrub':"_".join([var[6],var[8]])[6:-5], 
+            df = df.append({'behavior':"_".join([var_other[4],var_other[5]]),'ROI': roi, 'model':var_other[0][7:], 'strategy': var_other[1], 
+                        'parcel': var_other[3],'scrub':"_".join([var_other[6],var_other[8]])[6:-5], 
                         'r': pd.Series(r).values[roi],'p': q[1][roi]}, ignore_index=True)
         
         #and then the strategy
@@ -218,17 +243,18 @@ for file in soft:
         r, q = get_results(other_file)
         
         if len(var)==11:
-            df = df.append({'behavior':"_".join([var[4],var[5]]),'ROI': roi, 'model':var[0][7:], 'strategy': var[1], 
-                            'parcel': var[3],'scrub':"_".join([var[8],var[10]])[6:-5], 
+            df = df.append({'behavior':"_".join([var_other[4],var_other[5]]),'ROI': roi, 'model':var_other[0][7:], 'strategy': var_other[1], 
+                            'parcel': var_other[3],'scrub':"_".join([var_other[8],var_other[10]])[6:-5], 
                             'r': pd.Series(r).values[roi],'p': q[1][roi]}, ignore_index=True)
         elif len(var)==10:
-            df = df.append({'behavior':"_".join([var[4],var[5]]),'ROI': roi, 'model':var[0][7:], 'strategy': var[1], 
-                            'parcel': var[3],'scrub':"_".join([var[7],var[9]])[6:-5], 
+            df = df.append({'behavior':"_".join([var_other[4],var_other[5]]),'ROI': roi, 'model':var_other[0][7:], 'strategy': var_other[1], 
+                            'parcel': var_other[3],'scrub':"_".join([var_other[7],var_other[9]])[6:-5], 
                             'r': pd.Series(r).values[roi],'p': q[1][roi]}, ignore_index=True)
         else:
-            df = df.append({'behavior':"_".join([var[4],var[5]]),'ROI': roi, 'model':var[0][7:], 'strategy': var[1], 
-                        'parcel': var[3],'scrub':"_".join([var[6],var[8]])[6:-5], 
+            df = df.append({'behavior':"_".join([var_other[4],var_other[5]]),'ROI': roi, 'model':var_other[0][7:], 'strategy': var_other[1], 
+                        'parcel': var_other[3],'scrub':"_".join([var_other[6],var_other[8]])[6:-5], 
                         'r': pd.Series(r).values[roi],'p': q[1][roi]}, ignore_index=True)
+
 
 #Include the ROI information for seitzman set-1
 group_atlas = f'{conn_path}/group_mask_{atlas_name}.nii'
@@ -257,8 +283,11 @@ merged_df = pd.concat([set1, set2], axis=0).reset_index(drop=True)
 merged_df = merged_df[['behavior', 'model', 'strategy', 'parcel', 'scrub', 'r', 'p',
                        'x', 'y', 'z', 'network']]
 
-merged_df.to_excel(f'{path}/stability.xlsx',index=False)
+merged_df.to_excel(f'{path}/H4_stability.xlsx',index=False)
 
-df = merged_df[merged_df.scrub=='hard_per-0.05']
+df = merged_df[merged_df.scrub=='soft_per-0.05']
 df.drop(columns=["scrub"],inplace=True)
+df.sort_values(by=['behavior', 'strategy', 'parcel'],inplace=True)
+df = df[df.p<0.05]
+df.drop_duplicates(inplace=True)
 df.to_excel(f'{path}/H4_finaltable.xlsx',index=False)
