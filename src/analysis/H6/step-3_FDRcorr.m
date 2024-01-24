@@ -21,8 +21,8 @@ lags = 16;
 
 variables = {'total_sleep_duration','awake_time','restless_sleep', 'steps', 'inactive_time'};
 
-for i=1:3
-    thres=thresh(i);
+for t=1:3
+    thres=thresh(t);
     filepath = sprintf('%s/%s_%s_%s_thr-%s.mat', path, to_correct, strategy, atlas_name, num2str(thres*100));
     data = load(filepath);
     
@@ -31,9 +31,9 @@ for i=1:3
     
     %organize the data in a variables, lags, nodes array
     org_data = zeros(size(variables,2), lags, num_fields);
-    for i = 0:(num_fields-1)
-        fieldname = strcat('net_', string(i));
-        org_data(:, :, i+1) = getfield(data, fieldname);
+    for n = 0:(num_fields-1)
+        fieldname = strcat('net_', string(n));
+        org_data(:, :, n+1) = getfield(data, fieldname);
     end
     
     %with lag independence
