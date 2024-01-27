@@ -26,4 +26,4 @@ Each folder contains instructions for running the scripts. Please make sure to c
 For convinience, we have also realeased the uncorrected results for each hypothesis in a folder called results. As ususal, there is eight folders, one for each hypothesis. Inside each folder, there are two subfolders according to the denoise confounds used in cleaning the fMRI data. Results from H1, H2, H3, H5, H6, and H7 have three suffixes: global-eff for the global efficiency results, parti-coeff for the participation coefficient, and reg-links for the links. 
 
 # 5. Citation
-TODO: Citation here
+Please cite the following work: Triana AM, Salmitaival J, Hayward N, Saramäki J, Glerean E (2022) Effects of daily environmental, physiological, and lifestyle factors on functional brain connectivity. Preregistration at OSF: DOI 10.17605/OSF.IO/5HU9C
