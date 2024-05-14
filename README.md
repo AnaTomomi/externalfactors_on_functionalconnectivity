@@ -10,7 +10,7 @@ This project follows one subject for 133 days, collecting brain activity, cognit
 There are ___ main folders in the repository:
 
 # 3. How to run
-1. Request access to the data. The data is openly available for research purposes, however it is personal data collected and stored in Europe, so it is protected by the GDPR. Please request access to it by writing to researchdata@aalto.fi.
+1. Request access to the data. The data is openly available for research purposes, however it is personal data collected and stored in Europe, so it is protected by the GDPR. Visit https://zenodo.org/records/10571956 to request data access. If there are any questions, please write to researchdata@aalto.fi.
 
 2. Start preprocessing. We need to preprocess the data according to its source. 
   a. Cognitive data: cognitive data are the files produced by the presentation software. To preprocess these files, please run the scripts in ./src/preprocess/cognitive
