@@ -25,7 +25,7 @@ Each folder contains further explanations about their contents in their README f
 Each folder contains instructions for running the scripts. Please make sure to change the paths accordingly. 
 Please note that each script name starts with step#_ and this is the cue to know in which order the scripts should be called.
 
-3. Start the analysis. Our work has eight hypotheses. Therefore, we have divided the analysis into eight subfolders, so you do not need to run all the analysis. To run a particular analysis, please read the documentation in `/docs/analysis.md`. Go to the subfolder `./src/analysis/` and select the folder for the hypotheses in question. Again, you will find different scripts with the step#_ name, so it should be straightforward. If detailed explanations are needed, read the analysis.md file in the docs folder.
+3. Start the analysis. Our work has eight hypotheses. Therefore, we have divided the analysis into eight subfolders, so you do not need to run all the analysis. To run a particular analysis, please read the documentation in `/docs/analysis.md`. Go to the subfolder `./src/analysis/` and select the folder for the hypotheses in question. Again, you will find different scripts with the step#_ name, so it should be straightforward. If detailed explanations are needed, read the analysis.md file in the docs folder. *Remember to change the paths!*, as most are given as absolute paths, they will not reflect where the downloaded data is stored.
 
 4. Visualize. Our work has eight hypothesis and a few extra supplementary analysis. To visualize a particular result, please go to the subfolder `./src/visualization/` and select the script. Further documentation is provided in this folder. 
 
