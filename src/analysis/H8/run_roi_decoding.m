@@ -1,7 +1,7 @@
 clear all
 close all
 
-HPC=0;
+HPC=1;
 % roi definition file
 if (HPC==1)
     roifile="/scratch/cs/networks-pm/effects_externalfactors_on_functionalconnectivity/data/mri/conn_matrix/movie/group_seitzman-set1_info.xlsx";
@@ -44,12 +44,15 @@ for r=1:3
 end
 
 %% plot the result and compare it with leave one out approach
-nii=load_nii('niis/decoder_24HMP-8Phys-Spike_HPF_TRw25_step-1_subjects-1.nii');
+% this is the code to generate supplementary figure 41
+% Please note that paths have to be edited if you are following the git folder structure, here an example
+prefixpath='../../../results/H8/1TR/';
 
-%%
+nii=load_nii([prefixpath 'decoder_24HMP-8Phys-Spike_HPF_TRw25_step-1_subjects-1.nii']);
+
 close all
 for r=1:3
-    datal20o=load(['rois/roi' num2str(rois_to_run(r)) '/' num2str(x(r)) '_' num2str(y(r)) '_' num2str(z(r)) '_0.8.mat' ]);
+    datal20o=load([prefixpath 'rois/roi' num2str(rois_to_run(r)) '/' num2str(x(r)) '_' num2str(y(r)) '_' num2str(z(r)) '_0.8.mat' ]);
     datal1o=squeeze(nii.img(x(r),y(r),z(r),:));
     subplot(3,1,r)
     h=boxchart(datal20o.decVec');
