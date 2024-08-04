@@ -51,12 +51,3 @@ for c=1:2
 	end
 end
 
-%refimg=load_nii('/m/nbe/scratch/braindata/shared/toolboxes/HarvardOxford/MNI152_T1_2mm_brain.nii');
-%for s = 1:30
-%    niifile=['niis/' num2str(s) '.nii'];
-%    refimg=make_nii(out(:,:,:,s),[2 2 2]);
-%    save_nii(refimg,niifile)
-%
-%    nii=bramila_fixOriginator(niifile);
-%    save_nii(nii,niifile)
-%end
