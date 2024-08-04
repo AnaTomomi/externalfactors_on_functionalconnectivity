@@ -46,6 +46,7 @@ end
 %% plot the result and compare it with leave one out approach
 % this is the code to generate supplementary figure 41
 % Please note that paths have to be edited if you are following the git folder structure, here an example
+% NOTE: before rerunning the code below, you also need to gunzip the nifti file that stores the voxelwise results. This is a limitation of the NIFTI toolbox for matlab, and also due to the fact that we wanted to save storage space
 prefixpath='../../../results/H8/1TR/';
 
 nii=load_nii([prefixpath 'decoder_24HMP-8Phys-Spike_HPF_TRw25_step-1_subjects-1.nii']);
