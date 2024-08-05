@@ -19,8 +19,11 @@ Each folder contains further explanations about their contents in their README f
 1. Request access to the data. The data is openly available for research purposes, however it is personal data collected and stored in Europe, so it is protected by the GDPR. Visit https://zenodo.org/records/10571956 to request data access. If there are any questions, please write to researchdata@aalto.fi.
 
 2. Start preprocessing. We need to preprocess the data according to its source. 
+ 
   a. **Cognitive data**: cognitive data are the files produced by the presentation software. To preprocess these files, please read the documentation in `./docs/preprocess_cognitive_data.md` run the scripts in `./src/preprocess/cognitive` 
+  
   b. **Behavioral data**: behavioral data are the files produced by the different wearables and smartphones. To preprocess these files, please read the documentation in `./docs/preprocess_behavioral.md` and run the scripts in `./src/preprocess/behavioral`
+  
   c. **MRI data**: MRI data are the files taken in the MRI scanner. To preprocess these files, please read the documentation in `./docs/preprocess_mri_data.m` and run the scripts in `./src/preprocess/mri`
 Each folder contains instructions for running the scripts. Please make sure to change the paths accordingly. 
 Please note that each script name starts with step#_ and this is the cue to know in which order the scripts should be called.
